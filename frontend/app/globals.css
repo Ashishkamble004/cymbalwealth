@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 6.9%;
+    --card-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-gray-950 text-gray-100;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-gray-800 bg-gray-900/50 p-6 backdrop-blur-sm;
+  }
+  .card-header {
+    @apply text-sm font-medium text-gray-400 mb-4;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-green {
+    @apply bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-500/20;
+  }
+  .badge-yellow {
+    @apply bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20;
+  }
+  .badge-red {
+    @apply bg-red-500/10 text-red-400 ring-1 ring-inset ring-red-500/20;
+  }
+  .badge-blue {
+    @apply bg-blue-500/10 text-blue-400 ring-1 ring-inset ring-blue-500/20;
+  }
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.5);
+}
