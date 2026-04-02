@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cymbal Wealth — Home Loan Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cw: {
+              primary: "#791652",
+              "primary-dark": "#5a1040",
+              accent: "#C5A55A",
+              green: "#059669",
+              gray: {
+                50: "#F9FAFB", 100: "#F3F4F6", 200: "#E5E7EB",
+                300: "#D1D5DB", 400: "#9CA3AF", 500: "#6B7280",
+                600: "#4B5563", 700: "#374151", 800: "#1F2937", 900: "#111827",
+              },
+            },
+          },
+          fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: "Inter", system-ui, sans-serif; }
+    .range-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #E5E7EB; outline: none; margin: 10px 0; }
+    .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #791652; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-top: 0; }
+    .range-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #791652; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    .range-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #E5E7EB; }
+    .step-active { border-color: #791652; background: #791652; color: white; }
+    .step-done { border-color: #059669; background: #059669; color: white; }
+    .step-pending { border-color: #D1D5DB; background: white; color: #9CA3AF; }
+  </style>
+</head>
+<body class="bg-cw-gray-50 text-cw-gray-900">
+
+  <!-- Top Nav -->
+  <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="dashboard.html" class="text-cw-gray-400 hover:text-cw-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
+        <span class="text-sm text-cw-gray-400">/ Home Loan</span>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Progress Steps -->
+  <div class="bg-white border-b border-cw-gray-200">
+    <div class="max-w-4xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">1</div>
+          <span class="text-sm font-medium text-cw-primary">Eligibility</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">2</div>
+          <span class="text-sm font-medium text-cw-gray-400">Property Details</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">3</div>
+          <span class="text-sm font-medium text-cw-gray-400">Documents</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">4</div>
+          <span class="text-sm font-medium text-cw-gray-400">AI Verification</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">5</div>
+          <span class="text-sm font-medium text-cw-gray-400">Approval</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+      <!-- Left: Form -->
+      <div class="lg:col-span-2 space-y-8">
+        <div>
+          <h1 class="text-3xl font-bold text-cw-gray-900">Home Loan Eligibility</h1>
+          <p class="text-sm text-cw-gray-500 mt-2">Let's check how much home loan you're eligible for. This won't affect your credit score.</p>
+        </div>
+
+        <!-- Pre-filled Info -->
+        <div class="bg-cw-primary/5 rounded-2xl p-6 border border-cw-primary/10">
+          <div class="flex items-center space-x-2 mb-4">
+            <svg class="w-5 h-5 text-cw-primary" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+            <span class="text-sm font-semibold text-cw-primary">Pre-filled from your profile</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p class="text-cw-gray-400 text-xs">Full Name</p>
+              <p class="font-medium">Ashish Kamble</p>
+            </div>
+            <div>
+              <p class="text-cw-gray-400 text-xs">PAN</p>
+              <p class="font-mono font-medium">EWIPK1035H</p>
+            </div>
+            <div>
+              <p class="text-cw-gray-400 text-xs">Date of Birth</p>
+              <p class="font-medium">07 Apr 1997</p>
+            </div>
+            <div>
+              <p class="text-cw-gray-400 text-xs">Customer ID</p>
+              <p class="font-mono font-medium">CW-2026-001</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Details -->
+        <div class="bg-white rounded-2xl p-8 border border-cw-gray-200 shadow-sm">
+          <h3 class="text-lg font-bold text-cw-gray-900 mb-6">Employment & Income</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Employment Type</label>
+              <select class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none">
+                <option selected>Salaried</option>
+                <option>Self-Employed</option>
+                <option>Business Owner</option>
+                <option>Professional</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Company Name</label>
+              <input type="text" value="Nexagen Technologies Pvt. Ltd." class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Monthly Gross Income</label>
+              <div class="relative">
+                <span class="absolute left-4 top-3 text-sm text-cw-gray-400">₹</span>
+                <input type="text" value="1,50,000" class="w-full pl-8 pr-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Work Experience</label>
+              <select class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none">
+                <option>Less than 1 year</option>
+                <option>1-3 years</option>
+                <option selected>3-5 years</option>
+                <option>5-10 years</option>
+                <option>10+ years</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Existing EMIs (Monthly)</label>
+              <div class="relative">
+                <span class="absolute left-4 top-3 text-sm text-cw-gray-400">₹</span>
+                <input type="text" value="0" class="w-full pl-8 pr-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Co-applicant</label>
+              <select class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none">
+                <option selected>No Co-applicant</option>
+                <option>Spouse</option>
+                <option>Parent</option>
+                <option>Sibling</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loan Requirements -->
+        <div class="bg-white rounded-2xl p-8 border border-cw-gray-200 shadow-sm">
+          <h3 class="text-lg font-bold text-cw-gray-900 mb-6">Loan Requirement</h3>
+          <div class="space-y-8">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <label class="text-sm font-medium text-cw-gray-700">Loan Amount</label>
+                <span class="text-lg font-bold text-cw-primary" id="loanAmount">₹75,00,000</span>
+              </div>
+              <input type="range" min="500000" max="50000000" value="7500000" step="100000" class="range-slider" id="loanSlider" oninput="updateEligibility()">
+              <div class="flex justify-between text-xs text-cw-gray-400 mt-1">
+                <span>₹5 Lakh</span>
+                <span>₹5 Crore</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <label class="text-sm font-medium text-cw-gray-700">Loan Tenure</label>
+                <span class="text-lg font-bold text-cw-primary" id="loanTenure">20 years</span>
+              </div>
+              <input type="range" min="5" max="30" value="20" class="range-slider" id="tenureSlider" oninput="updateEligibility()">
+              <div class="flex justify-between text-xs text-cw-gray-400 mt-1">
+                <span>5 years</span>
+                <span>30 years</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-cw-gray-700 mb-2">Purpose</label>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <label class="flex items-center justify-center p-3 rounded-xl border-2 border-cw-primary bg-cw-primary/5 text-sm font-medium text-cw-primary cursor-pointer">
+                  <input type="radio" name="purpose" checked class="hidden" />
+                  Purchase
+                </label>
+                <label class="flex items-center justify-center p-3 rounded-xl border-2 border-cw-gray-200 text-sm font-medium text-cw-gray-600 cursor-pointer hover:border-cw-primary/50">
+                  <input type="radio" name="purpose" class="hidden" />
+                  Construction
+                </label>
+                <label class="flex items-center justify-center p-3 rounded-xl border-2 border-cw-gray-200 text-sm font-medium text-cw-gray-600 cursor-pointer hover:border-cw-primary/50">
+                  <input type="radio" name="purpose" class="hidden" />
+                  Renovation
+                </label>
+                <label class="flex items-center justify-center p-3 rounded-xl border-2 border-cw-gray-200 text-sm font-medium text-cw-gray-600 cursor-pointer hover:border-cw-primary/50">
+                  <input type="radio" name="purpose" class="hidden" />
+                  Balance Transfer
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center space-x-4">
+          <a href="home-loan-property.html" onclick="saveApplicantData()" class="px-8 py-4 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl inline-block">
+            Check Eligibility
+          </a>
+          <a href="dashboard.html" class="px-8 py-4 text-cw-gray-500 font-medium hover:text-cw-gray-700 transition-colors">
+            Cancel
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: Summary Card -->
+      <div class="space-y-6">
+        <!-- Eligibility Estimate -->
+        <div class="bg-white rounded-2xl p-6 border border-cw-gray-200 shadow-sm sticky top-24">
+          <h3 class="font-semibold text-cw-gray-900 mb-4">Estimated Eligibility</h3>
+
+          <div class="text-center py-6 bg-cw-primary/5 rounded-xl mb-6">
+            <p class="text-xs text-cw-gray-400 uppercase tracking-wider mb-1">You may be eligible for up to</p>
+            <p class="text-4xl font-extrabold text-cw-primary" id="maxEligible">₹87 L</p>
+            <p class="text-xs text-cw-gray-400 mt-1">Based on your income profile</p>
+          </div>
+
+          <div class="space-y-4 text-sm">
+            <div class="flex justify-between">
+              <span class="text-cw-gray-400">Interest Rate</span>
+              <span class="font-semibold text-cw-green">8.35% p.a.</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-cw-gray-400" id="emiLabel">Est. EMI (₹75L, 20yr)</span>
+              <span class="font-semibold text-cw-gray-900" id="emiValue">₹64,230/mo</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-cw-gray-400">Processing Fee</span>
+              <span class="font-semibold text-cw-green line-through decoration-cw-gray-400">₹10,000</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-cw-gray-400">Processing Fee (Offer)</span>
+              <span class="font-semibold text-cw-green">FREE</span>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-cw-gray-100">
+            <p class="text-xs text-cw-gray-400 mb-3">Next Steps after Eligibility:</p>
+            <div class="space-y-2">
+              <div class="flex items-center space-x-2 text-xs text-cw-gray-500">
+                <svg class="w-4 h-4 text-cw-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span>Property details & valuation</span>
+              </div>
+              <div class="flex items-center space-x-2 text-xs text-cw-gray-500">
+                <svg class="w-4 h-4 text-cw-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span>Income & property documents upload</span>
+              </div>
+              <div class="flex items-center space-x-2 text-xs text-cw-gray-500">
+                <svg class="w-4 h-4 text-cw-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span>AI Video Verification (Gemini Live)</span>
+              </div>
+              <div class="flex items-center space-x-2 text-xs text-cw-gray-500">
+                <svg class="w-4 h-4 text-cw-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span>Instant loan approval & disbursement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Why Cymbal Wealth -->
+        <div class="bg-white rounded-2xl p-6 border border-cw-gray-200 shadow-sm">
+          <h3 class="font-semibold text-cw-gray-900 mb-4">Why Cymbal Wealth?</h3>
+          <div class="space-y-3">
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-cw-accent mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-cw-gray-600">Lowest interest rates starting 8.35% p.a.</p>
+            </div>
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-cw-accent mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-cw-gray-600">AI-powered instant verification — no branch visit needed</p>
+            </div>
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-cw-accent mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-cw-gray-600">Approval in as fast as 24 hours</p>
+            </div>
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-cw-accent mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-cw-gray-600">Zero processing fee (limited time offer)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-cw-gray-200 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-cw-gray-400">
+      <span>&copy; 2026 Cymbal Wealth. All rights reserved.</span>
+      <span>*T&C apply. Interest rates subject to change. Demo Application.</span>
+    </div>
+  </footer>
+
+<script>
+function saveApplicantData() {
+  const loan = Number(document.getElementById('loanSlider').value);
+  const years = Number(document.getElementById('tenureSlider').value);
+  sessionStorage.setItem('homeloan_applicant', JSON.stringify({
+    name: 'Ashish Kamble',
+    pan: 'EWIPK1035H',
+    aadhaar_last4: '9692',
+    dob: '1997-04-07',
+    loan_amount: loan.toLocaleString('en-IN'),
+    property_value: '95,00,000',
+    tenure_years: String(years),
+    customer_id: 'CW-2026-001',
+  }));
+}
+
+function updateEligibility() {
+  const loan = Number(document.getElementById('loanSlider').value);
+  const years = Number(document.getElementById('tenureSlider').value);
+  const rate = 8.35;
+  const r = rate / 12 / 100;
+  const n = years * 12;
+  const emi = Math.round(loan * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1));
+
+  document.getElementById('loanAmount').textContent = '₹' + loan.toLocaleString('en-IN');
+  document.getElementById('loanTenure').textContent = years + ' years';
+
+  const loanLabel = loan >= 10000000 ? (loan/10000000).toFixed(1) + 'Cr' : (loan/100000).toFixed(0) + 'L';
+  document.getElementById('emiLabel').textContent = `Est. EMI (₹${loanLabel}, ${years}yr)`;
+  document.getElementById('emiValue').textContent = '₹' + emi.toLocaleString('en-IN') + '/mo';
+}
+</script>
+</body>
+</html>

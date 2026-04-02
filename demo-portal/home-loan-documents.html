@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cymbal Wealth — Document Upload</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { cw: { primary: "#791652", "primary-dark": "#5a1040", accent: "#C5A55A", green: "#059669", gray: { 50: "#F9FAFB", 100: "#F3F4F6", 200: "#E5E7EB", 300: "#D1D5DB", 400: "#9CA3AF", 500: "#6B7280", 600: "#4B5563", 700: "#374151", 800: "#1F2937", 900: "#111827" } } }, fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] } } } };
+  </script>
+  <style>
+    body { font-family: "Inter", system-ui, sans-serif; }
+    .step-active { border-color: #791652; background: #791652; color: white; }
+    .step-done { border-color: #059669; background: #059669; color: white; }
+    .step-pending { border-color: #D1D5DB; background: white; color: #9CA3AF; }
+    .upload-zone { border: 2px dashed #D1D5DB; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #791652; background: rgba(121,22,82,0.02); }
+    .upload-zone.uploaded { border-color: #059669; border-style: solid; background: rgba(5,150,105,0.03); }
+  </style>
+</head>
+<body class="bg-cw-gray-50 text-cw-gray-900">
+  <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="home-loan-property.html" class="text-cw-gray-400 hover:text-cw-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></a>
+        <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
+        <span class="text-sm text-cw-gray-400">/ Home Loan / Documents</span>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
+    </div>
+  </nav>
+
+  <!-- Progress -->
+  <div class="bg-white border-b border-cw-gray-200">
+    <div class="max-w-4xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">3</div><span class="text-sm font-medium text-cw-primary">Documents</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">4</div><span class="text-sm font-medium text-cw-gray-400">AI Verification</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">5</div><span class="text-sm font-medium text-cw-gray-400">Approval</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-6 py-10">
+    <h1 class="text-2xl font-bold text-cw-gray-900 mb-2">Upload Documents</h1>
+    <p class="text-sm text-cw-gray-500 mb-8">Upload the required documents for your home loan application. All documents will be verified by our AI agents.</p>
+
+    <!-- Document Categories -->
+    <div class="space-y-6">
+      <!-- Identity Documents -->
+      <div class="bg-white rounded-2xl p-6 border border-cw-gray-200 shadow-sm">
+        <h3 class="font-bold text-cw-gray-900 mb-1">Identity & KYC Documents</h3>
+        <p class="text-xs text-cw-gray-400 mb-4">Upload scanned copies of your PAN and Aadhaar card</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'PAN Card')">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-cw-gray-700">PAN Card (Image/PDF)</p>
+                <p class="text-xs text-cw-gray-400">Click to upload</p>
+              </div>
+            </div>
+          </div>
+          <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Aadhaar Card')">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-cw-gray-700">Aadhaar Card (Image/PDF)</p>
+                <p class="text-xs text-cw-gray-400">Click to upload</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Income Documents (TEMP: reduced to 2 salary slips for testing) -->
+      <div class="bg-white rounded-2xl p-6 border border-cw-gray-200 shadow-sm">
+        <h3 class="font-bold text-cw-gray-900 mb-1">Income Proof</h3>
+        <p class="text-xs text-cw-gray-400 mb-4">Salary slips</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="income-docs">
+          <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Salary Slip - Jan 2026')">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-cw-gray-700">Salary Slip — Jan 2026</p>
+                <p class="text-xs text-cw-gray-400">Click to upload PDF</p>
+              </div>
+            </div>
+          </div>
+          <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Salary Slip - Feb 2026')">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-cw-gray-700">Salary Slip — Feb 2026</p>
+                <p class="text-xs text-cw-gray-400">Click to upload PDF</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMPORARILY HIDDEN: Bank Statements, Property Documents -->
+      <!-- Revert totalDocs to 11 and uncomment these sections when ready -->
+    </div>
+
+    <!-- Upload counter -->
+    <div class="mt-6 mb-4 flex items-center justify-between">
+      <p class="text-sm text-cw-gray-500"><span id="uploadCount">0</span> of 4 documents uploaded</p>
+      <div class="w-48 h-2 bg-cw-gray-200 rounded-full overflow-hidden">
+        <div id="uploadBar" class="h-full bg-cw-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4 mt-4">
+      <button onclick="checkAndContinue()" id="continueBtn" class="px-8 py-4 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
+        Continue to AI Verification
+      </button>
+      <p id="validationMsg" class="text-sm text-red-500 mt-2 hidden"></p>
+      <a href="home-loan-property.html" class="px-8 py-4 text-cw-gray-500 font-medium hover:text-cw-gray-700 transition-colors">Back</a>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-cw-gray-200 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-cw-gray-400">
+      <span>&copy; 2026 Cymbal Wealth.</span><span>Demo Application</span>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = '/api/home-loan';
+    let uploadedCount = 0;
+    const totalDocs = 4; // TEMP: reduced from 11 for testing
+    const uploadedFiles = {}; // name -> { fileName, size, gcsPath }
+    let applicationRef = null;
+    let gcsFolder = null;
+
+    // On page load, get signed upload URLs from the backend
+    async function initUploadSession() {
+      try {
+        const docKeys = [
+          'pan_card', 'aadhaar_card',
+          'salary_slip_jan', 'salary_slip_feb',
+          // TEMP: reduced from 11 docs. Uncomment below to restore:
+          // 'salary_slip_mar', 'form16', 'bank_statement',
+          // 'sale_agreement', 'property_tax', 'builder_noc', 'encumbrance_cert'
+        ];
+        const applicantData = JSON.parse(sessionStorage.getItem('homeloan_applicant') || '{}');
+        const pan = applicantData.pan || 'EWIPK1035H';
+        const resp = await fetch(`${API_BASE}/upload-urls`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ applicant_pan: pan, documents: docKeys })
+        });
+        const data = await resp.json();
+        applicationRef = data.application_ref;
+        gcsFolder = data.gcs_folder;
+        window._uploadUrls = data.upload_urls;
+        console.log('[HomeLoan] Upload session initialized:', applicationRef);
+      } catch (e) {
+        console.error('[HomeLoan] Failed to get upload URLs, falling back to direct upload:', e);
+        window._uploadUrls = null;
+      }
+    }
+    initUploadSession();
+
+    // Map display names to API doc keys
+    const docNameToKey = {
+      'PAN Card': 'pan_card',
+      'Aadhaar Card': 'aadhaar_card',
+      'Salary Slip - Jan 2026': 'salary_slip_jan',
+      'Salary Slip - Feb 2026': 'salary_slip_feb',
+      'Salary Slip - Mar 2026': 'salary_slip_mar',
+      'Form 16 - FY 2025-26': 'form16',
+      'Bank Statement - 6 Months': 'bank_statement',
+      'Sale Agreement': 'sale_agreement',
+      'Property Tax Receipt': 'property_tax',
+      'Builder NOC': 'builder_noc',
+      'Encumbrance Certificate': 'encumbrance_cert',
+    };
+
+    function checkAndContinue() {
+      const msg = document.getElementById('validationMsg');
+      if (uploadedCount < totalDocs) {
+        msg.textContent = `Please upload all ${totalDocs} documents before proceeding. ${totalDocs - uploadedCount} remaining.`;
+        msg.classList.remove('hidden');
+        return;
+      }
+      // Store docs info + GCS paths for verification page
+      sessionStorage.setItem('homeloan_docs', JSON.stringify(uploadedFiles));
+      sessionStorage.setItem('homeloan_ref', applicationRef || '');
+      sessionStorage.setItem('homeloan_gcs', gcsFolder || '');
+      window.location.href = 'home-loan-verification.html';
+    }
+
+    function triggerFileUpload(el, name) {
+      if (el.classList.contains('uploaded')) return;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.txt,.pdf,.jpg,.png,.doc,.docx';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        handleFileUpload(el, name, file);
+      };
+      input.click();
+    }
+
+    async function handleFileUpload(el, name, file) {
+      const docKey = docNameToKey[name] || name.toLowerCase().replace(/\s+/g, '_');
+
+      // Show loading
+      el.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-cw-primary/10 rounded-lg flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-cw-primary animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-cw-primary">Uploading ${file.name} to Cloud Storage...</p>
+            <p class="text-xs text-cw-gray-400">${(file.size / 1024).toFixed(1)} KB</p>
+          </div>
+        </div>`;
+
+      let gcsPath = '';
+      let uploadSuccess = false;
+
+      // Try to upload via signed URL to GCS, or fallback to direct upload
+      if (window._uploadUrls && window._uploadUrls[docKey]) {
+        const uploadUrl = window._uploadUrls[docKey];
+
+        if (uploadUrl.startsWith('/api/')) {
+          // Fallback: direct upload through backend
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const resp = await fetch(uploadUrl, { method: 'POST', body: formData });
+            if (resp.ok) {
+              const result = await resp.json();
+              gcsPath = result.gcs_path || `${gcsFolder}/${docKey}`;
+              uploadSuccess = true;
+              console.log(`[HomeLoan] Direct upload ${name}: ${gcsPath}`);
+            }
+          } catch (e) {
+            console.error(`[HomeLoan] Direct upload error for ${name}:`, e);
+          }
+        } else {
+          // Signed URL: PUT directly to GCS
+          try {
+            const resp = await fetch(uploadUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/octet-stream' },
+              body: file,
+            });
+            if (resp.ok) {
+              gcsPath = `${gcsFolder}/${docKey}`;
+              uploadSuccess = true;
+              console.log(`[HomeLoan] Signed URL upload ${name}: ${gcsPath}`);
+            }
+          } catch (e) {
+            console.error(`[HomeLoan] Signed URL upload error for ${name}:`, e);
+          }
+        }
+      }
+
+      // If all upload methods failed, store locally
+      if (!uploadSuccess) {
+        console.log(`[HomeLoan] Storing ${name} locally`);
+        gcsPath = 'local';
+      }
+
+      // Update UI
+      el.classList.add('uploaded');
+      const gcsLabel = uploadSuccess ? `✓ Stored in GCS` : '⚠ Stored locally';
+      el.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-cw-gray-900 truncate">${name}</p>
+            <p class="text-xs text-green-600">${file.name} (${(file.size / 1024).toFixed(1)} KB) — ${gcsLabel}</p>
+          </div>
+        </div>`;
+
+      uploadedCount++;
+      if (!uploadedFiles[name]) {
+        uploadedFiles[name] = { fileName: file.name, size: file.size, gcsPath, docKey };
+      } else {
+        uploadedFiles[name].gcsPath = gcsPath;
+        uploadedFiles[name].docKey = docKey;
+      }
+      document.getElementById('uploadCount').textContent = uploadedCount;
+      document.getElementById('uploadBar').style.width = (uploadedCount / totalDocs * 100) + '%';
+      document.getElementById('validationMsg').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

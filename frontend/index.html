@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cymbal Wealth — Video KYC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              idfc: {
+                maroon: "#791652",
+                "maroon-dark": "#5a1040",
+                "maroon-light": "#9a2a6e",
+                blue: "#0066B3",
+                "blue-dark": "#004d87",
+                gold: "#C5A55A",
+                cream: "#FFF8F0",
+                gray: {
+                  50: "#F9FAFB",
+                  100: "#F3F4F6",
+                  200: "#E5E7EB",
+                  300: "#D1D5DB",
+                  400: "#9CA3AF",
+                  500: "#6B7280",
+                  600: "#4B5563",
+                  700: "#374151",
+                  800: "#1F2937",
+                  900: "#111827",
+                },
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      /* Pulse animation for recording indicator */
+      @keyframes pulse-ring {
+        0% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+      .pulse-ring::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse-ring 1.5s ease-out infinite;
+        opacity: 0.3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

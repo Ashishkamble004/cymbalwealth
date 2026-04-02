@@ -1,0 +1,62 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-homeloan"
+    args:
+      [
+        "build",
+        "-f",
+        "./backend/Dockerfile.homeloan",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/homeloan-backend:${_TAG}",
+        "./backend",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-homeloan"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/homeloan-backend:${_TAG}",
+      ]
+    waitFor: ["build-homeloan"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-homeloan"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "homeloan-backend",
+        "--image",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/homeloan-backend:${_TAG}",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+        "--allow-unauthenticated",
+        "--memory",
+        "1Gi",
+        "--cpu",
+        "1",
+        "--timeout",
+        "300",
+        "--max-instances",
+        "5",
+        "--set-env-vars",
+        "GCP_PROJECT=${PROJECT_ID},GCP_REGION=${_REGION},GCS_BUCKET=${_GCS_BUCKET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=TRUE,AGENT_ENGINE_ID=${_AGENT_ENGINE_ID}",
+      ]
+    waitFor: ["push-homeloan"]
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/homeloan-backend"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _GCS_BUCKET: cymbal-wealth
+  _TAG: latest
+  _AGENT_ENGINE_ID: projects/769002985772/locations/us-central1/reasoningEngines/5257055913222602752
+
+options:
+  logging: CLOUD_LOGGING_ONLY

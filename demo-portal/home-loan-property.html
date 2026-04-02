@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cymbal Wealth — Property Details</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { cw: { primary: "#791652", "primary-dark": "#5a1040", accent: "#C5A55A", green: "#059669", gray: { 50: "#F9FAFB", 100: "#F3F4F6", 200: "#E5E7EB", 300: "#D1D5DB", 400: "#9CA3AF", 500: "#6B7280", 600: "#4B5563", 700: "#374151", 800: "#1F2937", 900: "#111827" } } }, fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] } } } };
+  </script>
+  <style>body { font-family: "Inter", system-ui, sans-serif; } .step-active { border-color: #791652; background: #791652; color: white; } .step-done { border-color: #059669; background: #059669; color: white; } .step-pending { border-color: #D1D5DB; background: white; color: #9CA3AF; }</style>
+</head>
+<body class="bg-cw-gray-50 text-cw-gray-900">
+  <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="home-loan.html" class="text-cw-gray-400 hover:text-cw-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></a>
+        <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
+        <span class="text-sm text-cw-gray-400">/ Home Loan / Property</span>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
+    </div>
+  </nav>
+
+  <!-- Progress -->
+  <div class="bg-white border-b border-cw-gray-200">
+    <div class="max-w-4xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">2</div><span class="text-sm font-medium text-cw-primary">Property Details</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">3</div><span class="text-sm font-medium text-cw-gray-400">Documents</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">4</div><span class="text-sm font-medium text-cw-gray-400">AI Verification</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">5</div><span class="text-sm font-medium text-cw-gray-400">Approval</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-6 py-10">
+    <!-- Eligibility Result -->
+    <div class="bg-cw-green/5 border border-cw-green/20 rounded-2xl p-6 mb-8 flex items-center space-x-4">
+      <div class="w-12 h-12 bg-cw-green/10 rounded-full flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6 text-cw-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <p class="font-bold text-cw-green">Pre-approved for up to ₹87 Lakhs</p>
+        <p class="text-sm text-cw-gray-500">Based on your income of ₹1,50,000/month. Interest rate: 8.35% p.a. | Zero processing fee.</p>
+      </div>
+    </div>
+
+    <h1 class="text-2xl font-bold text-cw-gray-900 mb-2">Property Details</h1>
+    <p class="text-sm text-cw-gray-500 mb-8">Tell us about the property you're looking to finance.</p>
+
+    <div class="bg-white rounded-2xl p-8 border border-cw-gray-200 shadow-sm mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Property Type</label>
+          <select class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none">
+            <option selected>Flat / Apartment</option>
+            <option>Independent House / Villa</option>
+            <option>Plot + Construction</option>
+            <option>Row House</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Property Status</label>
+          <select class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none">
+            <option selected>Ready to Move</option>
+            <option>Under Construction</option>
+            <option>Resale</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Property Value (₹)</label>
+          <input type="text" value="95,00,000" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Down Payment (₹)</label>
+          <input type="text" value="20,00,000" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Property Address</label>
+          <input type="text" value="Flat 1204, Lodha Palava, Dombivli East, Thane 421204" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Builder / Developer</label>
+          <input type="text" value="Lodha Group" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">RERA Registration No.</label>
+          <input type="text" value="P51700028746" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Carpet Area (sq ft)</label>
+          <input type="text" value="750" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-cw-gray-700 mb-2">Expected Possession Date</label>
+          <input type="text" value="Already Possessed" class="w-full px-4 py-3 rounded-xl border border-cw-gray-300 text-sm focus:ring-2 focus:ring-cw-primary/30 focus:border-cw-primary outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <a href="home-loan-documents.html" onclick="savePropertyData()" class="px-8 py-4 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg">Continue to Documents</a>
+      <a href="home-loan.html" class="px-8 py-4 text-cw-gray-500 font-medium hover:text-cw-gray-700 transition-colors">Back</a>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-cw-gray-200 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-cw-gray-400">
+      <span>&copy; 2026 Cymbal Wealth.</span><span>Demo Application</span>
+    </div>
+  </footer>
+<script>
+function savePropertyData() {
+  const applicant = JSON.parse(sessionStorage.getItem('homeloan_applicant') || '{}');
+  // Update with property page values
+  const propertyValue = document.querySelector('input[value="95,00,000"]');
+  if (propertyValue) applicant.property_value = propertyValue.value;
+  sessionStorage.setItem('homeloan_applicant', JSON.stringify(applicant));
+}
+</script>
+</body>
+</html>

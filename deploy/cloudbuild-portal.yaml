@@ -1,0 +1,52 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-portal"
+    args:
+      [
+        "build",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/demo-portal:${_TAG}",
+        "./demo-portal",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-portal"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/demo-portal:${_TAG}",
+      ]
+    waitFor: ["build-portal"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-portal"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "demo-portal",
+        "--image",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/demo-portal:${_TAG}",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+        "--allow-unauthenticated",
+        "--memory",
+        "256Mi",
+        "--cpu",
+        "1",
+      ]
+    waitFor: ["push-portal"]
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/demo-portal"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _TAG: latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

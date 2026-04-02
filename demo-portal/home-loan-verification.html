@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cymbal Wealth — AI Document Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { cw: { primary: "#791652", "primary-dark": "#5a1040", accent: "#C5A55A", green: "#059669", red: "#dc2626", yellow: "#d97706", gray: { 50: "#F9FAFB", 100: "#F3F4F6", 200: "#E5E7EB", 300: "#D1D5DB", 400: "#9CA3AF", 500: "#6B7280", 600: "#4B5563", 700: "#374151", 800: "#1F2937", 900: "#111827" } } }, fontFamily: { sans: ["Inter", "system-ui", "sans-serif"], mono: ["JetBrains Mono", "monospace"] } } } };
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .step-active { border-color: #791652; background: #791652; color: white; }
+  .step-done { border-color: #059669; background: #059669; color: white; }
+  .step-pending { border-color: #D1D5DB; background: white; color: #9CA3AF; }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+  @keyframes slide-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .slide-in { animation: slide-in 0.3s ease-out forwards; }
+  .agent-card { transition: all 0.3s; }
+  .agent-card.active { border-color: #791652; box-shadow: 0 0 0 2px rgba(121,22,82,0.1); }
+  .agent-card.done { border-color: #059669; }
+  .agent-card.error { border-color: #dc2626; }
+  .log-entry { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+</style>
+</head>
+<body class="bg-cw-gray-50 text-cw-gray-900">
+  <!-- Nav -->
+  <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="home-loan-documents.html" class="text-cw-gray-400 hover:text-cw-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></a>
+        <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
+        <span class="text-sm text-cw-gray-400">/ Home Loan / AI Verification</span>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
+    </div>
+  </nav>
+
+  <!-- Progress -->
+  <div class="bg-white border-b border-cw-gray-200">
+    <div class="max-w-4xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Documents</span></div>
+        <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">4</div><span class="text-sm font-medium text-cw-primary">AI Verification</span></div>
+        <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold border-2">5</div><span class="text-sm font-medium text-cw-gray-400">Approval</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-cw-gray-900">AI Document Verification</h1>
+        <p class="text-sm text-cw-gray-500 mt-1">Multi-agent orchestration powered by Gemini 2.5 Flash</p>
+      </div>
+      <button onclick="startVerification()" id="startBtn" class="px-6 py-3 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg flex items-center space-x-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Start Verification</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left: Agent Cards -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- Orchestrator -->
+        <div id="agent-orchestrator" class="agent-card bg-white rounded-2xl p-5 border-2 border-cw-gray-200">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-primary/10 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-cw-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-cw-gray-900">Orchestrator Agent</h3>
+                <p class="text-xs text-cw-gray-400">Coordinates all verification agents</p>
+              </div>
+            </div>
+            <span id="status-orchestrator" class="text-xs font-semibold px-3 py-1 rounded-full bg-cw-gray-100 text-cw-gray-400">Idle</span>
+          </div>
+          <div id="result-orchestrator" class="hidden"></div>
+        </div>
+
+        <!-- Step 1a: Document Quality (Classification + Duplicate Detection) -->
+        <div id="agent-doc_quality" class="agent-card bg-white rounded-2xl p-5 border-2 border-cw-gray-200">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-cw-gray-900">Document Quality Agent</h3>
+                <p class="text-xs text-cw-gray-400">Gemini 2.5 Flash — Classification + Duplicate Detection</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] text-blue-500 font-medium px-2 py-0.5 bg-blue-50 rounded">PARALLEL</span>
+              <span id="status-doc_quality" class="text-xs font-semibold px-3 py-1 rounded-full bg-cw-gray-100 text-cw-gray-400">Idle</span>
+            </div>
+          </div>
+          <div id="result-doc_quality" class="hidden"></div>
+        </div>
+
+        <!-- Step 1b: Identity & Income Verification (runs in PARALLEL with Step 1a) -->
+        <div id="agent-identity_income" class="agent-card bg-white rounded-2xl p-5 border-2 border-cw-gray-200">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-cw-gray-900">Identity & Income Agent</h3>
+                <p class="text-xs text-cw-gray-400">Gemini 2.5 Flash — PAN/Aadhaar + Salary Verification</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] text-blue-500 font-medium px-2 py-0.5 bg-blue-50 rounded">PARALLEL</span>
+              <span id="status-identity_income" class="text-xs font-semibold px-3 py-1 rounded-full bg-cw-gray-100 text-cw-gray-400">Idle</span>
+            </div>
+          </div>
+          <div id="result-identity_income" class="hidden"></div>
+        </div>
+
+        <!-- Step 2: Property & Eligibility (sequential — needs income data from Step 1b) -->
+        <div id="agent-property_eligibility" class="agent-card bg-white rounded-2xl p-5 border-2 border-cw-gray-200">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-cw-primary/10 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-cw-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-cw-gray-900">Property & Eligibility Agent</h3>
+                <p class="text-xs text-cw-gray-400">Gemini 2.5 Flash — Property Docs + Loan Eligibility</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] text-orange-500 font-medium px-2 py-0.5 bg-orange-50 rounded">SEQUENTIAL</span>
+              <span id="status-property_eligibility" class="text-xs font-semibold px-3 py-1 rounded-full bg-cw-gray-100 text-cw-gray-400">Idle</span>
+            </div>
+          </div>
+          <div id="result-property_eligibility" class="hidden"></div>
+        </div>
+      </div>
+
+      <!-- Right: Live Agent Log -->
+      <div class="space-y-4">
+        <div class="bg-cw-gray-900 rounded-2xl overflow-hidden sticky top-24">
+          <div class="px-4 py-3 border-b border-cw-gray-700 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div id="log-indicator" class="w-2 h-2 rounded-full bg-cw-gray-600"></div>
+              <span class="text-xs font-semibold text-cw-gray-300 uppercase tracking-wider">Agent Trace Log</span>
+            </div>
+            <span class="text-[10px] text-cw-gray-500 font-mono">Gemini 2.5 Flash</span>
+          </div>
+          <div id="agent-log" class="p-4 h-[600px] overflow-y-auto space-y-1 text-xs font-mono">
+            <div class="text-cw-gray-500">// Waiting for verification to start...</div>
+          </div>
+        </div>
+
+        <!-- Summary Card (shown after completion) -->
+        <div id="summary-card" class="hidden bg-white rounded-2xl p-6 border-2 border-cw-gray-200">
+          <h3 class="font-bold text-cw-gray-900 mb-3">Verification Summary</h3>
+          <div id="summary-content"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-cw-gray-200 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-cw-gray-400">
+      <span>&copy; 2026 Cymbal Wealth.</span><span>Demo — Multi-Agent Orchestration powered by Google Gemini</span>
+    </div>
+  </footer>
+
+<script>
+// Agent cards: orchestrator, doc_quality, identity_income, property_eligibility
+let logEl, indicatorEl;
+
+function addLog(text, type = 'info') {
+  const colors = { info: 'text-cw-gray-400', agent: 'text-blue-400', success: 'text-green-400', error: 'text-red-400', warn: 'text-yellow-400', handoff: 'text-purple-400' };
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const div = document.createElement('div');
+  div.className = `log-entry ${colors[type] || colors.info} slide-in`;
+  div.innerHTML = `<span class="text-cw-gray-600">[${time}]</span> ${text}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setAgentStatus(id, status, extraClass = '') {
+  const el = document.getElementById(`status-${id}`);
+  const card = document.getElementById(`agent-${id}`);
+  card.classList.remove('active','done','error');
+  const statusMap = {
+    running: { text: 'Running...', cls: 'bg-cw-primary/10 text-cw-primary', cardCls: 'active' },
+    done: { text: 'Passed', cls: 'bg-green-50 text-green-700', cardCls: 'done' },
+    warning: { text: 'Warning', cls: 'bg-yellow-50 text-yellow-700', cardCls: 'done' },
+    error: { text: 'Failed', cls: 'bg-red-50 text-red-700', cardCls: 'error' },
+    idle: { text: 'Idle', cls: 'bg-cw-gray-100 text-cw-gray-400', cardCls: '' },
+  };
+  const s = statusMap[status] || statusMap.idle;
+  el.textContent = s.text;
+  el.className = `text-xs font-semibold px-3 py-1 rounded-full ${s.cls}`;
+  if (s.cardCls) card.classList.add(s.cardCls);
+}
+
+function showResult(id, html) {
+  const el = document.getElementById(`result-${id}`);
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+  el.classList.add('slide-in');
+}
+
+function resultRow(label, value, status = 'pass') {
+  const icons = {
+    pass: '<svg class="w-4 h-4 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+    fail: '<svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+    warn: '<svg class="w-4 h-4 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+  };
+  return `<div class="flex items-center space-x-2 py-1.5 text-xs border-b border-cw-gray-100 last:border-0">${icons[status]}<span class="text-cw-gray-500 w-32 shrink-0">${label}</span><span class="font-medium text-cw-gray-800">${value}</span></div>`;
+}
+
+
+
+async function startVerification() {
+  const API_BASE = '/api/home-loan';
+  logEl = document.getElementById('agent-log');
+  indicatorEl = document.getElementById('log-indicator');
+  logEl.innerHTML = '';
+  indicatorEl.classList.add('pulse-dot');
+  indicatorEl.classList.remove('bg-cw-gray-600');
+  indicatorEl.classList.add('bg-green-400');
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').classList.add('opacity-50','cursor-not-allowed');
+
+  const docs = JSON.parse(sessionStorage.getItem('homeloan_docs') || '{}');
+  const appRef = sessionStorage.getItem('homeloan_ref') || '';
+  const gcsFolder = sessionStorage.getItem('homeloan_gcs') || '';
+
+  // Build GCS document paths
+  const gcsDocPaths = {};
+  for (const [name, info] of Object.entries(docs)) {
+    if (info.gcsPath && info.gcsPath !== 'local') {
+      gcsDocPaths[name] = info.gcsPath;
+    }
+  }
+
+  if (Object.keys(gcsDocPaths).length === 0) {
+    addLog('❌ No documents found in GCS. Please upload documents first.', 'error');
+    indicatorEl.classList.remove('pulse-dot', 'bg-green-400');
+    indicatorEl.classList.add('bg-red-400');
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').classList.remove('opacity-50','cursor-not-allowed');
+    return;
+  }
+
+  setAgentStatus('orchestrator', 'running');
+  addLog('🔄 Orchestrator Agent initialized', 'agent');
+  addLog(`📋 ${Object.keys(gcsDocPaths).length} documents in GCS | Folder: ${gcsFolder || 'N/A'}`, 'info');
+  addLog('🤖 Calling /api/home-loan/verify → Gemini 2.5 Flash multi-agent pipeline', 'info');
+  addLog('📡 Documents will be read from GCS by Gemini for OCR & analysis...', 'info');
+
+  // Read applicant data from sessionStorage (carried from previous pages)
+  const applicantData = JSON.parse(sessionStorage.getItem('homeloan_applicant') || '{}');
+  const applicantName = applicantData.name || 'Ashish Kamble';
+  const applicantPan = applicantData.pan || 'EWIPK1035H';
+  const applicantAadhaar = applicantData.aadhaar_last4 || '9692';
+  const applicantDob = applicantData.dob || '1997-04-07';
+  const loanAmount = applicantData.loan_amount || '75,00,000';
+  const propertyValue = applicantData.property_value || '95,00,000';
+  const tenureYears = applicantData.tenure_years || '20';
+  if (!applicantData.pan) {
+    addLog('⚠️ No session data — using default applicant details', 'warn');
+  }
+
+  // Call the real backend API
+  try {
+    const verifyPayload = {
+      application_ref: appRef || `${applicantPan}_${Date.now()}`,
+      applicant_name: applicantName,
+      applicant_pan: applicantPan,
+      applicant_aadhaar_last4: applicantAadhaar,
+      applicant_dob: applicantDob,
+      loan_amount: loanAmount,
+      property_value: propertyValue,
+      tenure_years: tenureYears,
+      gcs_folder: gcsFolder,
+      documents: gcsDocPaths,
+    };
+
+    addLog(`📤 POST ${API_BASE}/verify`, 'info');
+    addLog(`   Payload: ${JSON.stringify({...verifyPayload, documents: `{${Object.keys(gcsDocPaths).length} docs}`})}`, 'info');
+
+    const resp = await fetch(`${API_BASE}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(verifyPayload),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`API returned ${resp.status}: ${errText}`);
+    }
+
+    addLog('', 'info');
+    addLog('📥 Streaming results from multi-agent pipeline...', 'success');
+    addLog('', 'info');
+
+    let activeAgentId = null;
+    let result = null;
+    const allStreamedTexts = []; // collect all text entries for final pass/fail check
+
+    function resolveAgentId(name) {
+      if (!name) return null;
+      const n = name.toLowerCase();
+      if (n.includes('doc_quality') || n.includes('classifier') || n.includes('duplicate')) return 'doc_quality';
+      if (n.includes('identity_income') || n.includes('identity') || n.includes('income')) return 'identity_income';
+      if (n.includes('property_eligibility') || n.includes('property') || n.includes('eligibility')) return 'property_eligibility';
+      if (n.includes('parallel')) return 'orchestrator';
+      if (n.includes('orchestrator') || n.includes('sequential')) return 'orchestrator';
+      return null;
+    }
+
+    const agentDisplayNames = {
+      'doc_quality': 'Document Quality Agent',
+      'identity_income': 'Identity & Income Agent',
+      'property_eligibility': 'Property & Eligibility Agent',
+      'orchestrator': 'Orchestrator Agent',
+    };
+
+    // Parse JSON response (Agent Engine returns clean JSON)
+    result = await resp.json();
+
+    addLog(`📥 Pipeline completed | Docs: ${result.documents_processed} | Agent Engine: ${result.agent_engine_id || 'N/A'}`, 'success');
+    addLog(`   GCS: ${result.gcs_folder || 'N/A'}`, 'info');
+    setAgentStatus('orchestrator', 'done');
+
+    // Process each verification result
+    for (const entry of (result.verification_results || [])) {
+      const agentId = resolveAgentId(entry.agent);
+
+      // Handle text output from agents
+      if (entry.text) {
+        allStreamedTexts.push(entry.text);
+
+        // Update agent card status
+        if (agentId && agentId !== 'orchestrator' && agentId !== activeAgentId) {
+          if (activeAgentId && activeAgentId !== 'orchestrator') {
+            setAgentStatus(activeAgentId, 'done');
+          }
+          setAgentStatus(agentId, 'running');
+          activeAgentId = agentId;
+          addLog(`🔄 ${agentDisplayNames[agentId] || entry.agent} processing...`, 'agent');
+        }
+
+        // Log each line with color
+        const lines = entry.text.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+          const t = line.trim();
+          if (t.includes('FAIL') || t.includes('REJECT') || t.includes('MISMATCH') || t.includes('DUPLICATE')) {
+            addLog(`  ${t}`, 'error');
+          } else if (t.includes('PASS') || t.includes('VERIFIED') || t.includes('verified') || t.includes('match') || t.includes('Consistent')) {
+            addLog(`  ${t}`, 'success');
+          } else if (t.includes('WARNING') || t.includes('REVIEW')) {
+            addLog(`  ${t}`, 'warn');
+          } else if (t.startsWith('#') || t.startsWith('**') || t.startsWith('===')) {
+            addLog(`  ${t}`, 'agent');
+          } else {
+            addLog(`  ${t}`, 'info');
+          }
+        }
+
+        // Show in agent card
+        const cardId = agentId || activeAgentId;
+        if (cardId && cardId !== 'orchestrator') {
+          const resultEl = document.getElementById(`result-${cardId}`);
+          const escapedText = entry.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          if (resultEl && resultEl.classList.contains('hidden')) {
+            showResult(cardId, `<div class="mt-2 bg-cw-gray-50 rounded-lg p-3 text-xs text-cw-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">${escapedText}</div>`);
+          } else if (resultEl) {
+            const inner = resultEl.querySelector('.bg-cw-gray-50');
+            if (inner) inner.innerHTML += `<div class="border-t border-cw-gray-200 mt-2 pt-2">${escapedText}</div>`;
+          }
+        }
+      }
+    }
+
+    // Mark any still-running agents as done
+    for (const id of ['doc_quality','identity_income','property_eligibility']) {
+      const statusEl = document.getElementById(`status-${id}`);
+      if (statusEl && statusEl.textContent === 'Running...') {
+        setAgentStatus(id, 'done');
+      }
+    }
+
+    // Check if there were failures using ALL streamed text (not dependent on result object)
+    const fullText = allStreamedTexts.join(' ').toLowerCase();
+    const hasFailure = fullText.includes('fail') || fullText.includes('reject') || fullText.includes('duplicate detected') || fullText.includes('mismatch');
+
+    addLog('', 'info');
+    addLog('═══════════════════════════════════════', 'info');
+    if (hasFailure) {
+      addLog('⚠️  VERIFICATION COMPLETE — ISSUES FOUND', 'warn');
+    } else {
+      addLog('✅  ALL VERIFICATIONS PASSED (Gemini 2.5 Flash)', 'success');
+      addLog('    Loan application recommended for approval.', 'success');
+    }
+    addLog('═══════════════════════════════════════', 'info');
+    const docsProcessed = result ? result.documents_processed : allStreamedTexts.length;
+    addLog(`⏱️  Agents: 3 (parallel) | Model: gemini-2.5-flash | Docs: ${docsProcessed}`, 'info');
+
+    indicatorEl.classList.remove('pulse-dot', 'bg-green-400');
+    indicatorEl.classList.add(hasFailure ? 'bg-yellow-400' : 'bg-green-400');
+
+    // Show summary
+    const summaryCard = document.getElementById('summary-card');
+    const summaryContent = document.getElementById('summary-content');
+    summaryCard.classList.remove('hidden');
+    summaryCard.classList.add('slide-in');
+
+    if (hasFailure) {
+      summaryCard.classList.add('border-yellow-300');
+      summaryContent.innerHTML = `
+        <div class="bg-yellow-50 rounded-lg p-4 mb-4 text-center">
+          <p class="text-lg font-bold text-yellow-700">Issues Found</p>
+          <p class="text-sm text-yellow-600 mt-1">Gemini detected document issues — review required</p>
+        </div>
+        <a href="home-loan-documents.html" class="block w-full text-center px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all">Re-upload Documents</a>`;
+    } else {
+      // Compute EMI dynamically from user's actual selections
+      const loanNum = Number(loanAmount.replace(/,/g, ''));
+      const tenureNum = Number(tenureYears);
+      const rateM = 8.35 / 12 / 100;
+      const nM = tenureNum * 12;
+      const emi = Math.round(loanNum * rateM * Math.pow(1+rateM, nM) / (Math.pow(1+rateM, nM) - 1));
+      const loanRef = 'HL-CW-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*90000)+10000);
+
+      summaryCard.classList.add('border-green-300');
+      summaryContent.innerHTML = `
+        <div class="bg-green-50 rounded-lg p-4 mb-4 text-center">
+          <p class="text-lg font-bold text-green-700">Pre-Approved</p>
+          <p class="text-2xl font-extrabold text-green-800 mt-1 font-mono">₹${loanNum.toLocaleString('en-IN')}</p>
+          <p class="text-sm text-green-600 mt-1">at 8.35% p.a. for ${tenureNum} years</p>
+        </div>
+        <div class="space-y-2 text-sm mb-4">
+          <div class="flex justify-between"><span class="text-cw-gray-500">Monthly EMI</span><span class="font-semibold">₹${emi.toLocaleString('en-IN')}</span></div>
+          <div class="flex justify-between"><span class="text-cw-gray-500">Processing Fee</span><span class="font-semibold text-green-600">FREE</span></div>
+          <div class="flex justify-between"><span class="text-cw-gray-500">Verified by</span><span class="font-semibold text-green-600">Gemini 2.5 Flash</span></div>
+          <div class="flex justify-between"><span class="text-cw-gray-500">Loan Ref</span><span class="font-mono font-semibold text-cw-gray-700">${loanRef}</span></div>
+        </div>
+        <button onclick="showApprovalBanner()" class="block w-full text-center px-6 py-3 bg-cw-green hover:bg-green-700 text-white font-semibold rounded-xl transition-all">Accept & Proceed</button>`;
+      // Store loan ref for approval banner
+      window._loanRef = loanRef;
+      window._loanAmount = loanNum;
+      window._emi = emi;
+      window._tenure = tenureNum;
+      window._applicantName = applicantName;
+    }
+
+  } catch (err) {
+    addLog(`❌ API Error: ${err.message}`, 'error');
+    addLog('   The backend multi-agent pipeline encountered an error.', 'error');
+    addLog('   Check Cloud Run logs for details.', 'info');
+    setAgentStatus('orchestrator', 'error');
+    indicatorEl.classList.remove('pulse-dot', 'bg-green-400');
+    indicatorEl.classList.add('bg-red-400');
+
+    // Show error summary
+    const summaryCard = document.getElementById('summary-card');
+    const summaryContent = document.getElementById('summary-content');
+    summaryCard.classList.remove('hidden');
+    summaryCard.classList.add('slide-in', 'border-red-300');
+    summaryContent.innerHTML = `
+      <div class="bg-red-50 rounded-lg p-4 mb-4 text-center">
+        <p class="text-lg font-bold text-red-700">Verification Error</p>
+        <p class="text-sm text-red-600 mt-1">${err.message}</p>
+      </div>
+      <a href="home-loan-documents.html" class="block w-full text-center px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all">Try Again</a>`;
+  }
+}
+
+function showApprovalBanner() {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50';
+  overlay.style.animation = 'fadeIn 0.3s ease-out';
+  overlay.innerHTML = `
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg mx-4 overflow-hidden" style="animation: slideUp 0.4s ease-out">
+      <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6 text-center text-white">
+        <svg class="w-16 h-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h2 class="text-2xl font-extrabold">Application Submitted!</h2>
+        <p class="text-white/80 text-sm mt-1">Loan Ref: ${window._loanRef || 'HL-CW-' + Date.now()}</p>
+      </div>
+      <div class="px-8 py-6">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+          <div class="flex items-start space-x-3">
+            <svg class="w-6 h-6 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="font-bold text-amber-800 text-sm">Sent for Human Review</p>
+              <p class="text-xs text-amber-700 mt-1">Your application has been forwarded to our credit team for final review and amount disbursal approval. You will be notified within 24-48 hours.</p>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-3 text-sm mb-5">
+          <div class="flex justify-between py-2 border-b border-gray-100">
+            <span class="text-gray-500">Applicant</span>
+            <span class="font-semibold">${window._applicantName || 'Applicant'}</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-gray-100">
+            <span class="text-gray-500">Loan Amount</span>
+            <span class="font-semibold">₹${(window._loanAmount || 7500000).toLocaleString('en-IN')}</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-gray-100">
+            <span class="text-gray-500">Interest Rate</span>
+            <span class="font-semibold text-green-600">8.35% p.a.</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-gray-100">
+            <span class="text-gray-500">EMI</span>
+            <span class="font-semibold">₹${(window._emi || 64376).toLocaleString('en-IN')}/month</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-gray-100">
+            <span class="text-gray-500">AI Verification</span>
+            <span class="font-semibold text-green-600">All Checks Passed</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-gray-500">Status</span>
+            <span class="font-semibold text-amber-600">Pending Human Approval</span>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <a href="dashboard.html" class="block w-full text-center px-6 py-3 bg-[#791652] hover:bg-[#5a1040] text-white font-semibold rounded-xl transition-all">
+            Go to Dashboard
+          </a>
+          <a href="index.html" class="block w-full text-center px-6 py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all">
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(overlay);
+}
+</script>
+</body>
+</html>

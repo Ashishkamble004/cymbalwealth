@@ -1,0 +1,55 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-frontend"
+    args:
+      [
+        "build",
+        "--build-arg",
+        "VITE_BACKEND_URL=${_BACKEND_WS_URL}",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-frontend:${_TAG}",
+        "./frontend",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-frontend"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-frontend:${_TAG}",
+      ]
+    waitFor: ["build-frontend"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-frontend"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "kyc-frontend",
+        "--image",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-frontend:${_TAG}",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+        "--allow-unauthenticated",
+        "--memory",
+        "256Mi",
+        "--cpu",
+        "1",
+      ]
+    waitFor: ["push-frontend"]
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-frontend"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _TAG: latest
+  _BACKEND_WS_URL: wss://kyc-backend-mcj3w7ujpq-uc.a.run.app
+
+options:
+  logging: CLOUD_LOGGING_ONLY

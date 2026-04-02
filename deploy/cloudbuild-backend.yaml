@@ -1,0 +1,62 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-backend"
+    args:
+      [
+        "build",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}",
+        "./backend",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-backend"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}",
+      ]
+    waitFor: ["build-backend"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-backend"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "kyc-backend",
+        "--image",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+        "--allow-unauthenticated",
+        "--memory",
+        "2Gi",
+        "--cpu",
+        "2",
+        "--timeout",
+        "3600",
+        "--session-affinity",
+        "--max-instances",
+        "3",
+        "--min-instances",
+        "1",
+        "--set-env-vars",
+        "GCP_PROJECT=${PROJECT_ID},GCP_REGION=${_REGION},GCS_BUCKET=${_GCS_BUCKET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=TRUE",
+      ]
+    waitFor: ["push-backend"]
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _GCS_BUCKET: cymbal-wealth
+  _TAG: latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

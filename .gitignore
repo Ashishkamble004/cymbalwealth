@@ -1,25 +1,22 @@
-# Dependencies
-node_modules/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+dist/
 venv/
 .venv/
-*.egg-info/
-
-# Build artifacts
-.next/
-out/
-dist/
-build/
-*.whl
-
-# Environment
+*.egg
 .env
-.env.local
+
+# Node
+node_modules/
+frontend/dist/
+.vite/
+*.tsbuildinfo
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
@@ -28,5 +25,5 @@ build/
 .DS_Store
 Thumbs.db
 
-# Cloud
-cloud-sql-proxy
+# Local transcripts
+backend/transcripts/
