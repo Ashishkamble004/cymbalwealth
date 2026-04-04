@@ -3,7 +3,7 @@
 Architecture:
 - Document uploads: Handled locally on Cloud Run → GCS
 - Verification: Routed to Vertex AI Agent Engine (multi-agent orchestration)
-- Agent Engine ID: projects/769002985772/locations/us-central1/reasoningEngines/5257055913222602752
+- Agent Engine ID: projects/769002985772/locations/us-central1/reasoningEngines/5332737497585680384
 """
 
 import asyncio
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api/home-loan", tags=["home-loan"])
 GCS_BUCKET = os.getenv("GCS_BUCKET", "cymbal-wealth")
 AGENT_ENGINE_ID = os.getenv(
     "AGENT_ENGINE_ID",
-    "projects/769002985772/locations/us-central1/reasoningEngines/5257055913222602752"
+    "projects/769002985772/locations/us-central1/reasoningEngines/5332737497585680384"
 )
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "general-ak")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
