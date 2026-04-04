@@ -2,8 +2,9 @@ import React, { useState, useCallback } from "react";
 import LandingPage from "./components/LandingPage";
 import LoginPage from "./components/LoginPage";
 import KYCSession from "./components/KYCSession";
+import InvestmentsPage from "./components/InvestmentsPage";
 
-type AppView = "landing" | "login" | "kyc";
+type AppView = "landing" | "login" | "kyc" | "investments";
 
 export default function App() {
   const [view, setView] = useState<AppView>("landing");
@@ -23,15 +24,27 @@ export default function App() {
     setReferenceNumber("");
   }, []);
 
+  const handleStartInvestments = useCallback(() => {
+    setView("investments");
+  }, []);
+
   return (
     <div className="min-h-screen bg-idfc-gray-50">
-      {view === "landing" && <LandingPage onStartKYC={handleStartKYC} />}
+      {view === "landing" && (
+        <LandingPage
+          onStartKYC={handleStartKYC}
+          onStartInvestments={handleStartInvestments}
+        />
+      )}
       {view === "login" && <LoginPage onLogin={handleLogin} />}
       {view === "kyc" && (
         <KYCSession
           referenceNumber={referenceNumber}
           onEndSession={handleEndSession}
         />
+      )}
+      {view === "investments" && (
+        <InvestmentsPage onBack={() => setView("landing")} />
       )}
     </div>
   );

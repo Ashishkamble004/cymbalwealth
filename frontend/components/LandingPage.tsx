@@ -2,9 +2,10 @@ import React from "react";
 
 interface LandingPageProps {
   onStartKYC: () => void;
+  onStartInvestments: () => void;
 }
 
-export default function LandingPage({ onStartKYC }: LandingPageProps) {
+export default function LandingPage({ onStartKYC, onStartInvestments }: LandingPageProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
@@ -50,6 +51,15 @@ export default function LandingPage({ onStartKYC }: LandingPageProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 <span>Complete Video KYC</span>
+              </button>
+              <button
+                onClick={onStartInvestments}
+                className="px-8 py-4 bg-idfc-maroon hover:bg-idfc-maroon-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span>Investments</span>
               </button>
               <a
                 href="#services"
@@ -118,6 +128,16 @@ export default function LandingPage({ onStartKYC }: LandingPageProps) {
               {
                 icon: (
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                ),
+                title: "Investments — NSE/BSE Market Intelligence",
+                desc: "AI-powered stock market assistant. Get live quotes, index data, sector performance, and company financials for any NSE/BSE listed stock — powered by MCP + Google ADK.",
+                onClick: onStartInvestments,
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                   </svg>
                 ),
@@ -127,13 +147,21 @@ export default function LandingPage({ onStartKYC }: LandingPageProps) {
             ].map((card, i) => (
               <div
                 key={i}
-                className="flex items-start space-x-4 p-5 bg-white rounded-xl border border-idfc-gray-200 hover:border-idfc-maroon/30 hover:shadow-md transition-all duration-200"
+                onClick={(card as any).onClick}
+                className={`flex items-start space-x-4 p-5 bg-white rounded-xl border border-idfc-gray-200 hover:border-idfc-maroon/30 hover:shadow-md transition-all duration-200 ${
+                  (card as any).onClick ? "cursor-pointer" : ""
+                }`}
               >
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-idfc-maroon/10 flex items-center justify-center text-idfc-maroon">
                   {card.icon}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-idfc-gray-900">{card.title}</h3>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-semibold text-idfc-gray-900">{card.title}</h3>
+                    {(card as any).onClick && (
+                      <span className="text-xs px-2 py-0.5 bg-idfc-maroon text-white rounded-full font-medium">Try Now</span>
+                    )}
+                  </div>
                   <p className="text-sm text-idfc-gray-500 mt-1">{card.desc}</p>
                 </div>
               </div>
