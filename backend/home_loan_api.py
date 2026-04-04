@@ -338,6 +338,8 @@ async def verify_documents(request: VerifyRequest):
             })
 
     if has_binary:
+        # Agent Engine stream_query accepts the parts list directly or as a Content dict.
+        # Using the parts list directly avoids SDK version inconsistencies with role wrapping.
         prompt = {"role": "user", "parts": message_parts}
         logger.info(f"[HomeLoan] Multimodal message: {len(message_parts)} parts (file_data GCS URIs for binary docs)")
     else:
@@ -379,16 +381,17 @@ async def verify_documents(request: VerifyRequest):
         def _run_agent():
             try:
                 # Acquire a pre-warmed session from the pool (usually instant)
-                remote_agent, session_id, _ = _pool.acquire_sync(loop)
-                user_id = f"homeloan-{request.applicant_pan}"
-                logger.info(f"[HomeLoan] Using session: {session_id}")
+                # IMPORTANT: use the pool's uid in stream_query — session belongs to that uid
+                remote_agent, session_id, pool_uid = _pool.acquire_sync(loop)
+                # Use pool_uid — session was created under this user_id, must match for stream_query
+                logger.info(f"[HomeLoan] Using session: {session_id} (uid: {pool_uid})")
                 loop.call_soon_threadsafe(queue.put_nowait, {
                     "type": "status",
                     "message": "Agent Engine session ready | Running verification pipeline..."
                 })
 
                 for raw_event in remote_agent.stream_query(
-                    user_id=user_id, session_id=session_id, message=prompt
+                    user_id=pool_uid, session_id=session_id, message=prompt
                 ):
                     author, text = _parse_event(raw_event)
                     if text:
