@@ -74,40 +74,25 @@ def get_storage_client() -> storage.Client:
 # Singletons for job infrastructure
 # ---------------------------------------------------------------------------
 
-_database: Database | None = None
-_job_store: JobStore | None = None
-_broadcaster: SSEBroadcaster | None = None
-_task_runner: TaskRunner | None = None
-_review_service: ReviewService | None = None
-_log_service: LogService | None = None
 
-
+@lru_cache
 def get_database() -> Database:
-    global _database
-    if _database is None:
-        _database = Database()
-    return _database
+    return Database()
 
 
+@lru_cache
 def get_job_store() -> JobStore:
-    global _job_store
-    if _job_store is None:
-        _job_store = JobStore(db=get_database())
-    return _job_store
+    return JobStore(db=get_database())
 
 
+@lru_cache
 def get_broadcaster() -> SSEBroadcaster:
-    global _broadcaster
-    if _broadcaster is None:
-        _broadcaster = SSEBroadcaster()
-    return _broadcaster
+    return SSEBroadcaster()
 
 
+@lru_cache
 def get_task_runner() -> TaskRunner:
-    global _task_runner
-    if _task_runner is None:
-        _task_runner = TaskRunner()
-    return _task_runner
+    return TaskRunner()
 
 
 # ---------------------------------------------------------------------------
@@ -217,18 +202,14 @@ def get_stitch_service() -> StitchService:
     return StitchService(storage=get_local_storage())
 
 
+@lru_cache
 def get_review_service() -> ReviewService:
-    global _review_service
-    if _review_service is None:
-        _review_service = ReviewService(db=get_database())
-    return _review_service
+    return ReviewService(db=get_database())
 
 
+@lru_cache
 def get_log_service() -> LogService:
-    global _log_service
-    if _log_service is None:
-        _log_service = LogService(db=get_database())
-    return _log_service
+    return LogService(db=get_database())
 
 
 def get_pipeline_service() -> PipelineService:

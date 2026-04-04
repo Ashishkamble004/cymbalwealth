@@ -9,6 +9,15 @@ import type {
   LogEntry,
 } from '../types';
 
+/** Upsert `result` into `list` (matched by `scene_number`), keeping sorted order. */
+function upsertScene<T extends { scene_number: number }>(list: T[], result: T): T[] {
+  const exists = list.some((r) => r.scene_number === result.scene_number);
+  if (exists) {
+    return list.map((r) => (r.scene_number === result.scene_number ? result : r));
+  }
+  return [...list, result].sort((a, b) => a.scene_number - b.scene_number);
+}
+
 interface PipelineState {
   activeStep: number;
   runId: string | null;
@@ -108,36 +117,10 @@ export const usePipelineStore = create<PipelineState>((set) => ({
     })),
 
   addOrUpdateStoryboardScene: (result) =>
-    set((state) => {
-      const exists = state.storyboardResults.some(
-        (r) => r.scene_number === result.scene_number,
-      );
-      return {
-        storyboardResults: exists
-          ? state.storyboardResults.map((r) =>
-              r.scene_number === result.scene_number ? result : r,
-            )
-          : [...state.storyboardResults, result].sort(
-              (a, b) => a.scene_number - b.scene_number,
-            ),
-      };
-    }),
+    set((state) => ({ storyboardResults: upsertScene(state.storyboardResults, result) })),
 
   addOrUpdateVideoScene: (result) =>
-    set((state) => {
-      const exists = state.videoResults.some(
-        (r) => r.scene_number === result.scene_number,
-      );
-      return {
-        videoResults: exists
-          ? state.videoResults.map((r) =>
-              r.scene_number === result.scene_number ? result : r,
-            )
-          : [...state.videoResults, result].sort(
-              (a, b) => a.scene_number - b.scene_number,
-            ),
-      };
-    }),
+    set((state) => ({ videoResults: upsertScene(state.videoResults, result) })),
 
   setFinalVideo: (path) => set({ finalVideoPath: path }),
 

@@ -15,29 +15,11 @@ from app.ai.prompts import (
     build_customer_profile_section,
 )
 from app.ai.retry import async_retry
+from app.ai.safety import ALL_SAFETY_OFF
 from app.config import Settings
 from app.utils.json_parser import parse_json_response
 
 logger = logging.getLogger(__name__)
-
-ALL_SAFETY_OFF = [
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-]
 
 
 class GeminiService:

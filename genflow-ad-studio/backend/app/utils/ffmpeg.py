@@ -8,6 +8,11 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Shared ffmpeg output codec flags used consistently across all encode steps.
+_VIDEO_ENCODE_FLAGS = ["-c:v", "libx264", "-preset", "fast", "-crf", "18"]
+_AUDIO_ENCODE_FLAGS = ["-c:a", "aac", "-b:a", "192k"]
+_OUTPUT_FLAGS = ["-movflags", "+faststart"]
+
 
 def check_ffmpeg() -> bool:
     """Check if ffmpeg is available on the system PATH."""
@@ -75,9 +80,9 @@ async def _preprocess_video(input_path: str, output_path: str) -> str:
         "ffmpeg", "-y",
         "-i", input_path,
         "-vf", "fps=24,format=yuv420p",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-        "-movflags", "+faststart",
+        *_VIDEO_ENCODE_FLAGS,
+        *_AUDIO_ENCODE_FLAGS, "-ar", "48000", "-ac", "2",
+        *_OUTPUT_FLAGS,
         output_path,
     ]
     proc = await asyncio.create_subprocess_exec(
@@ -171,9 +176,9 @@ async def _concat_with_xfade(
         "-filter_complex", filter_complex,
         "-map", f"[{current_v}]",
         "-map", f"[{current_a}]",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-c:a", "aac", "-b:a", "192k",
-        "-movflags", "+faststart",
+        *_VIDEO_ENCODE_FLAGS,
+        *_AUDIO_ENCODE_FLAGS,
+        *_OUTPUT_FLAGS,
         output_path,
     ]
 
@@ -202,9 +207,9 @@ async def _concat_with_demuxer(
         "-f", "concat",
         "-safe", "0",
         "-i", concat_file,
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-c:a", "aac", "-b:a", "192k",
-        "-movflags", "+faststart",
+        *_VIDEO_ENCODE_FLAGS,
+        *_AUDIO_ENCODE_FLAGS,
+        *_OUTPUT_FLAGS,
         output_path,
     ]
 
@@ -348,9 +353,9 @@ async def _concat_with_per_scene_xfade(
         "-filter_complex", filter_complex,
         "-map", f"[{current_v}]",
         "-map", f"[{current_a}]",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-c:a", "aac", "-b:a", "192k",
-        "-movflags", "+faststart",
+        *_VIDEO_ENCODE_FLAGS,
+        *_AUDIO_ENCODE_FLAGS,
+        *_OUTPUT_FLAGS,
         output_path,
     ]
 

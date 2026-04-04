@@ -69,3 +69,14 @@ class LocalStorage:
         if not target_dir.exists():
             return []
         return [f.name for f in target_dir.iterdir() if f.is_file()]
+
+    def find_product_image(self, run_id: str) -> str:
+        """Return the product image filename (e.g. 'product_image.png') for a run.
+
+        Checks common extensions in order. Raises FileNotFoundError if none exist.
+        """
+        for ext in ("png", "jpg", "webp"):
+            filename = f"product_image.{ext}"
+            if self.get_path(run_id, filename).exists():
+                return filename
+        raise FileNotFoundError(f"No product image found for run {run_id}")

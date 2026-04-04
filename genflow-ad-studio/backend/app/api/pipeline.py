@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -63,7 +64,6 @@ async def generate_script(
     """Generate script only (synchronous). Creates a job for persistence."""
     # Pre-generate run_id so SSE log streaming works during the service call
     if not request.run_id:
-        import uuid
         request = request.model_copy(update={"run_id": uuid.uuid4().hex[:12]})
     token = pipeline_run_id.set(request.run_id)
     try:

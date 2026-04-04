@@ -24,6 +24,8 @@ load_dotenv(env_path)
 from google import genai
 from google.genai import types
 
+from app.ai.safety import ALL_SAFETY_OFF
+
 # ---------------------------------------------------------------------------
 # Sample product definitions
 # ---------------------------------------------------------------------------
@@ -252,25 +254,6 @@ SAMPLES = [
             "8K, ultra-detailed product photo, commercial advertising quality."
         ),
     },
-]
-
-ALL_SAFETY_OFF = [
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold=types.HarmBlockThreshold.OFF,
-    ),
 ]
 
 

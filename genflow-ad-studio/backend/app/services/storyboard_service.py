@@ -95,7 +95,7 @@ class StoryboardService:
 
         # Load reference images
         avatar_bytes = self.storage.load_bytes(run_id, "avatar_selected.png")
-        product_path = self._find_product_image(run_id)
+        product_path = self.storage.find_product_image(run_id)
         product_bytes = self.storage.load_bytes(run_id, product_path)
 
         # Build initial prompt
@@ -233,10 +233,3 @@ class StoryboardService:
             image_size=image_size,
         )
 
-    def _find_product_image(self, run_id: str) -> str:
-        """Find the product image file in the run directory."""
-        for ext in ("png", "jpg", "webp"):
-            path = self.storage.get_path(run_id, f"product_image.{ext}")
-            if path.exists():
-                return f"product_image.{ext}"
-        raise FileNotFoundError(f"No product image found for run {run_id}")

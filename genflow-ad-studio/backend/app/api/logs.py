@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.dependencies import get_log_service
+from app.services.log_service import LogService
 
 router = APIRouter(prefix="/api/v1/logs", tags=["logs"])
 
@@ -11,7 +12,9 @@ class LogListRequest(BaseModel):
 
 
 @router.post("/list")
-async def list_logs(request: LogListRequest):
-    svc = get_log_service()
+async def list_logs(
+    request: LogListRequest,
+    svc: LogService = Depends(get_log_service),
+):
     logs = svc.get_logs(request.job_id)
     return {"logs": logs}

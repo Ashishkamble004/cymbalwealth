@@ -176,7 +176,7 @@ class VideoService:
         ))
         gcs_storyboard_path = f"pipeline/{run_id}/scenes/scene_{scene_num}/storyboard.png"
 
-        product_filename = self._find_product_image(run_id)
+        product_filename = self.storage.find_product_image(run_id)
         product_local = str(self.storage.get_path(run_id, product_filename))
         gcs_product_path = f"pipeline/{run_id}/product_image.png"
 
@@ -260,44 +260,12 @@ class VideoService:
             generate_audio=generate_audio,
         )
 
-        # 4. Download all variants from GCS to local in parallel
-        local_paths = []
-        for i in range(len(video_gcs_uris)):
-            local_path = self.storage.get_path(
-                run_id,
-                f"variant_{i}.mp4",
-                subdir=f"scenes/scene_{scene_num}/video_variants",
-            )
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            local_paths.append(local_path)
-        await asyncio.gather(*(
-            asyncio.to_thread(self.gcs.download_to_local, uri, str(lp))
-            for uri, lp in zip(video_gcs_uris, local_paths)
-        ))
-        variants: list[VideoVariant] = [
-            VideoVariant(index=i, video_path=self.storage.to_url_path(str(lp)))
-            for i, lp in enumerate(local_paths)
-        ]
+        # 4–5. Download variants from GCS and run QC
+        variants, selected_idx = await self._download_and_qc_variants(
+            run_id, scene_num, video_gcs_uris, product_gcs_uri
+        )
 
-        # 5. Run QC on all variants in parallel
-        qc_tasks = [
-            self.qc.qc_video(video_uri=video_gcs_uris[i], reference_uri=product_gcs_uri)
-            for i in range(len(variants))
-        ]
-        qc_results = await asyncio.gather(*qc_tasks, return_exceptions=True)
-        for i, result in enumerate(qc_results):
-            if isinstance(result, Exception):
-                logger.warning(
-                    "Video QC failed for scene %d variant %d: %s",
-                    scene_num, i, result,
-                )
-            else:
-                variants[i].qc_report = result
-
-        # 6. Auto-select best variant
-        selected_idx = self.qc.select_best_video_variant(variants)
-
-        # 7. QC feedback loop: if best variant fails QC, rewrite prompt and regenerate
+        # 6. QC feedback loop: if best variant fails QC, rewrite prompt and regenerate
         regen_attempts = 0
         if max_qc_regen_attempts > 0:
             selected_variant = next((v for v in variants if v.index == selected_idx), variants[0])
@@ -336,42 +304,10 @@ class VideoService:
                     generate_audio=generate_audio,
                 )
 
-                # Download and replace variants in parallel
-                regen_local_paths = []
-                for i in range(len(video_gcs_uris)):
-                    local_path = self.storage.get_path(
-                        run_id,
-                        f"variant_{i}.mp4",
-                        subdir=f"scenes/scene_{scene_num}/video_variants",
-                    )
-                    local_path.parent.mkdir(parents=True, exist_ok=True)
-                    regen_local_paths.append(local_path)
-                await asyncio.gather(*(
-                    asyncio.to_thread(self.gcs.download_to_local, uri, str(lp))
-                    for uri, lp in zip(video_gcs_uris, regen_local_paths)
-                ))
-                variants = [
-                    VideoVariant(index=i, video_path=self.storage.to_url_path(str(lp)))
-                    for i, lp in enumerate(regen_local_paths)
-                ]
-
-                # Re-run QC in parallel
-                regen_qc_tasks = [
-                    self.qc.qc_video(video_uri=video_gcs_uris[i], reference_uri=product_gcs_uri)
-                    for i in range(len(variants))
-                ]
-                regen_qc_results = await asyncio.gather(*regen_qc_tasks, return_exceptions=True)
-                for i, result in enumerate(regen_qc_results):
-                    if isinstance(result, Exception):
-                        logger.warning(
-                            "Video QC failed for scene %d variant %d (regen %d): %s",
-                            scene_num, i, regen_round + 1, result,
-                        )
-                    else:
-                        variants[i].qc_report = result
-
-                # Re-select best
-                selected_idx = self.qc.select_best_video_variant(variants)
+                variants, selected_idx = await self._download_and_qc_variants(
+                    run_id, scene_num, video_gcs_uris, product_gcs_uri,
+                    log_suffix=f" (regen {regen_round + 1})",
+                )
                 selected_variant = next((v for v in variants if v.index == selected_idx), variants[0])
 
         # 8. Copy best to selected_video.mp4
@@ -453,6 +389,55 @@ class VideoService:
             previous_qc_report=previous_qc_report,
         )
 
+    async def _download_and_qc_variants(
+        self,
+        run_id: str,
+        scene_num: int,
+        video_gcs_uris: list[str],
+        product_gcs_uri: str,
+        log_suffix: str = "",
+    ) -> tuple[list[VideoVariant], int]:
+        """Download video variants from GCS, run QC, and return (variants, best_index).
+
+        Extracted to avoid duplicating the download+QC block for initial generation
+        and each QC regen round.
+        """
+        local_paths = []
+        for i in range(len(video_gcs_uris)):
+            local_path = self.storage.get_path(
+                run_id,
+                f"variant_{i}.mp4",
+                subdir=f"scenes/scene_{scene_num}/video_variants",
+            )
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            local_paths.append(local_path)
+
+        await asyncio.gather(*(
+            asyncio.to_thread(self.gcs.download_to_local, uri, str(lp))
+            for uri, lp in zip(video_gcs_uris, local_paths)
+        ))
+
+        variants: list[VideoVariant] = [
+            VideoVariant(index=i, video_path=self.storage.to_url_path(str(lp)))
+            for i, lp in enumerate(local_paths)
+        ]
+
+        qc_results = await asyncio.gather(*(
+            self.qc.qc_video(video_uri=video_gcs_uris[i], reference_uri=product_gcs_uri)
+            for i in range(len(variants))
+        ), return_exceptions=True)
+
+        for i, result in enumerate(qc_results):
+            if isinstance(result, Exception):
+                logger.warning(
+                    "Video QC failed for scene %d variant %d%s: %s",
+                    scene_num, i, log_suffix, result,
+                )
+            else:
+                variants[i].qc_report = result
+
+        return variants, self.qc.select_best_video_variant(variants)
+
     async def select_variant(
         self, run_id: str, scene_number: int, variant_index: int
     ) -> str:
@@ -460,15 +445,12 @@ class VideoService:
 
         Copies the chosen variant to selected_video.mp4 and returns its URL path.
         """
-        source_local = str(self.storage.get_path(
+        variant_path = self.storage.get_path(
             run_id,
             f"variant_{variant_index}.mp4",
             subdir=f"scenes/scene_{scene_number}/video_variants",
-        ))
-        if not self.storage.get_path(
-            run_id, f"variant_{variant_index}.mp4",
-            subdir=f"scenes/scene_{scene_number}/video_variants",
-        ).exists():
+        )
+        if not variant_path.exists():
             raise FileNotFoundError(
                 f"Variant {variant_index} not found for scene {scene_number}"
             )
@@ -476,7 +458,7 @@ class VideoService:
         selected_path = self.storage.save_file(
             run_id=run_id,
             filename="selected_video.mp4",
-            source_path=source_local,
+            source_path=str(variant_path),
             subdir=f"scenes/scene_{scene_number}",
         )
         logger.info(
@@ -484,10 +466,3 @@ class VideoService:
         )
         return self.storage.to_url_path(selected_path)
 
-    def _find_product_image(self, run_id: str) -> str:
-        """Find the product image file in the run directory."""
-        for ext in ("png", "jpg", "webp"):
-            path = self.storage.get_path(run_id, f"product_image.{ext}")
-            if path.exists():
-                return f"product_image.{ext}"
-        raise FileNotFoundError(f"No product image found for run {run_id}")

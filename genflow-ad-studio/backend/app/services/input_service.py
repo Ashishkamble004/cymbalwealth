@@ -3,6 +3,8 @@ import logging
 import uuid
 from pathlib import Path
 
+import httpx
+
 from app.ai.gemini import GeminiService
 from app.ai.gemini_image import GeminiImageService
 from app.config import Settings
@@ -65,8 +67,6 @@ class InputService:
             local_path = Path(self.settings.output_dir).resolve() / image_url.removeprefix("/output/")
             image_bytes = local_path.read_bytes()
         else:
-            import httpx
-
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
                 resp = await client.get(image_url)
                 resp.raise_for_status()
