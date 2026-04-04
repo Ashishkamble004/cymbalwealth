@@ -66,7 +66,7 @@ export default function KYCSession({
   const isConnected = connectionState === ConnectionState.CONNECTED;
 
   return (
-    <div className="h-screen flex flex-col bg-idfc-gray-50">
+    <div className="h-[100dvh] flex flex-col bg-idfc-gray-50">
       {/* Top Bar */}
       <header className="bg-idfc-maroon text-white px-4 py-3 flex items-center justify-between shadow-md z-10">
         <div className="flex items-center space-x-3">
@@ -94,22 +94,23 @@ export default function KYCSession({
                 : "Disconnected"}
             </span>
           </div>
-          <span className="text-xs font-mono bg-white/10 px-2 py-1 rounded">
+          <span className="hidden sm:inline text-xs font-mono bg-white/10 px-2 py-1 rounded">
             {referenceNumber}
           </span>
           <button
             onClick={() => setShowEndConfirm(true)}
-            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded transition-colors"
+            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded transition-colors flex items-center space-x-1"
           >
-            End Session
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <span className="hidden sm:inline">End Session</span>
           </button>
         </div>
       </header>
 
       {/* Main Content - 70/30 split */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left: Video Feed (70%) */}
-        <div className="w-[70%] bg-idfc-gray-900 relative flex flex-col">
+        <div className="w-full md:w-[70%] h-[45vh] md:h-auto bg-idfc-gray-900 relative flex flex-col">
           {/* Video */}
           <div className="flex-1 relative">
             <video
@@ -247,7 +248,7 @@ export default function KYCSession({
         </div>
 
         {/* Right: Chat Panel (30%) */}
-        <div className="w-[30%] flex flex-col bg-white border-l border-idfc-gray-200">
+        <div className="w-full md:w-[30%] flex flex-col bg-white border-t md:border-t-0 md:border-l border-idfc-gray-200">
           {/* Chat header */}
           <div className="px-4 py-3 border-b border-idfc-gray-200 bg-idfc-gray-50">
             <h3 className="font-semibold text-idfc-gray-800 text-sm">
@@ -338,7 +339,7 @@ export default function KYCSession({
       {/* End session confirmation modal */}
       {showEndConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm mx-4">
+          <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-sm mx-4">
             <h3 className="text-lg font-bold text-idfc-gray-900">
               End KYC Session?
             </h3>

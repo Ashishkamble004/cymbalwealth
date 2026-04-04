@@ -173,7 +173,7 @@ export default function VerificationStatus({
   if (!hasActivity) return null;
 
   return (
-    <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3 min-w-[220px]">
+    <div className="bg-black/60 backdrop-blur-sm rounded-lg p-2 sm:p-3 min-w-[160px] sm:min-w-[220px]">
       <p className="text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">
         Verification Progress
       </p>

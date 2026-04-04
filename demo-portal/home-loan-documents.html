@@ -25,7 +25,7 @@
       <div class="flex items-center space-x-4">
         <a href="home-loan-property.html" class="text-cw-gray-400 hover:text-cw-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></a>
         <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
-        <span class="text-sm text-cw-gray-400">/ Home Loan / Documents</span>
+        <span class="hidden sm:inline text-sm text-cw-gray-400">/ Home Loan / Documents</span>
       </div>
       <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
     </div>
@@ -33,8 +33,19 @@
 
   <!-- Progress -->
   <div class="bg-white border-b border-cw-gray-200">
-    <div class="max-w-4xl mx-auto px-6 py-6">
-      <div class="flex items-center justify-between">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <!-- Mobile stepper: compact current step indicator -->
+      <div class="sm:hidden">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">3</div>
+          <div>
+            <p class="text-sm font-medium text-cw-primary">Documents</p>
+            <p class="text-xs text-cw-gray-400">Step 3 of 5</p>
+          </div>
+        </div>
+      </div>
+      <!-- Desktop stepper: full horizontal -->
+      <div class="hidden sm:flex items-center justify-between">
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
@@ -48,7 +59,7 @@
     </div>
   </div>
 
-  <div class="max-w-4xl mx-auto px-6 py-10">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     <h1 class="text-2xl font-bold text-cw-gray-900 mb-2">Upload Documents</h1>
     <p class="text-sm text-cw-gray-500 mb-8">Upload the required documents for your home loan application. All documents will be verified by our AI agents.</p>
 
@@ -119,15 +130,15 @@
     </div>
 
     <!-- Upload counter -->
-    <div class="mt-6 mb-4 flex items-center justify-between">
+    <div class="mt-4 mb-3 flex items-center justify-between gap-4">
       <p class="text-sm text-cw-gray-500"><span id="uploadCount">0</span> of 4 documents uploaded</p>
       <div class="w-48 h-2 bg-cw-gray-200 rounded-full overflow-hidden">
         <div id="uploadBar" class="h-full bg-cw-primary rounded-full transition-all duration-500" style="width: 0%"></div>
       </div>
     </div>
 
-    <div class="flex items-center space-x-4 mt-4">
-      <button onclick="checkAndContinue()" id="continueBtn" class="px-8 py-4 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-4">
+      <button onclick="checkAndContinue()" id="continueBtn" class="px-8 py-4 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto">
         Continue to AI Verification
       </button>
       <p id="validationMsg" class="text-sm text-red-500 mt-2 hidden"></p>

@@ -52,12 +52,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-12">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           {/* Left side - Info */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-last lg:order-first">
             <div>
-              <h1 className="text-4xl font-bold text-idfc-gray-900 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-idfc-gray-900 leading-tight">
                 Complete Your{" "}
                 <span className="text-idfc-maroon">Video KYC</span>
                 <br />
@@ -116,7 +116,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
 
           {/* Right side - Login Form */}
-          <div className="bg-white rounded-2xl shadow-xl border border-idfc-gray-200 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-idfc-gray-200 p-5 sm:p-8">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-idfc-maroon/10 mb-4">
                 <svg className="w-8 h-8 text-idfc-maroon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
       {/* Footer */}
       <footer className="bg-idfc-gray-50 border-t border-idfc-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between text-xs text-idfc-gray-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-idfc-gray-400">
           <span>&copy; {new Date().getFullYear()} Cymbal Wealth. All rights reserved.</span>
           <span>Powered by Google Gemini</span>
         </div>

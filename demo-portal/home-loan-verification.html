@@ -31,7 +31,7 @@
       <div class="flex items-center space-x-4">
         <a href="home-loan-documents.html" class="text-cw-gray-400 hover:text-cw-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></a>
         <span class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></span>
-        <span class="text-sm text-cw-gray-400">/ Home Loan / AI Verification</span>
+        <span class="hidden sm:inline text-sm text-cw-gray-400">/ Home Loan / AI Verification</span>
       </div>
       <div class="w-9 h-9 rounded-full bg-cw-primary flex items-center justify-center text-white text-sm font-bold">AK</div>
     </div>
@@ -39,8 +39,19 @@
 
   <!-- Progress -->
   <div class="bg-white border-b border-cw-gray-200">
-    <div class="max-w-4xl mx-auto px-6 py-6">
-      <div class="flex items-center justify-between">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <!-- Mobile stepper: compact current step indicator -->
+      <div class="sm:hidden">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">4</div>
+          <div>
+            <p class="text-sm font-medium text-cw-primary">AI Verification</p>
+            <p class="text-xs text-cw-gray-400">Step 4 of 5</p>
+          </div>
+        </div>
+      </div>
+      <!-- Desktop stepper: full horizontal -->
+      <div class="hidden sm:flex items-center justify-between">
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
@@ -54,13 +65,13 @@
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-6 py-8">
-    <div class="flex items-center justify-between mb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 sm:mb-8">
       <div>
         <h1 class="text-2xl font-bold text-cw-gray-900">AI Document Verification</h1>
         <p class="text-sm text-cw-gray-500 mt-1">Multi-agent orchestration powered by Gemini 2.5 Flash</p>
       </div>
-      <button onclick="startVerification()" id="startBtn" class="px-6 py-3 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg flex items-center space-x-2">
+      <button onclick="startVerification()" id="startBtn" class="px-6 py-3 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all shadow-lg flex items-center space-x-2 w-full sm:w-auto">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <span>Start Verification</span>
       </button>
@@ -157,7 +168,7 @@
             </div>
             <span class="text-[10px] text-cw-gray-500 font-mono">Gemini 2.5 Flash</span>
           </div>
-          <div id="agent-log" class="p-4 h-[600px] overflow-y-auto space-y-1 text-xs font-mono">
+          <div id="agent-log" class="p-4 h-[280px] sm:h-[400px] lg:h-[600px] overflow-y-auto space-y-1 text-xs font-mono">
             <div class="text-cw-gray-500">// Waiting for verification to start...</div>
           </div>
         </div>
@@ -505,7 +516,7 @@ function showApprovalBanner() {
         <h2 class="text-2xl font-extrabold">Application Submitted!</h2>
         <p class="text-white/80 text-sm mt-1">Loan Ref: ${window._loanRef || 'HL-CW-' + Date.now()}</p>
       </div>
-      <div class="px-8 py-6">
+      <div class="px-4 sm:px-8 py-4 sm:py-6">
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
           <div class="flex items-start space-x-3">
             <svg class="w-6 h-6 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">

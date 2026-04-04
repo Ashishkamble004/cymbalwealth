@@ -56,7 +56,7 @@
 
   <!-- Top Nav -->
   <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-8">
         <a href="index.html" class="text-xl font-bold text-cw-primary tracking-tight">Cymbal<span class="text-cw-accent">Wealth</span></a>
         <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-cw-gray-600">
@@ -66,6 +66,9 @@
           <a href="#" class="hover:text-cw-primary transition-colors">Cards</a>
           <a href="#" class="hover:text-cw-primary transition-colors">Insurance</a>
         </div>
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-cw-gray-600 hover:text-cw-primary rounded-lg" onclick="toggleMobileMenu()">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
       </div>
       <div class="flex items-center space-x-4">
         <button class="relative p-2 text-cw-gray-400 hover:text-cw-gray-600">
@@ -82,8 +85,21 @@
       </div>
     </div>
   </nav>
+<div id="mobile-menu" class="hidden md:hidden bg-white border-b border-cw-gray-200 px-4 py-3 space-y-1">
+  <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-cw-primary bg-cw-primary/5">Dashboard</a>
+  <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-cw-gray-600 hover:text-cw-primary hover:bg-cw-primary/5">Investments</a>
+  <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-cw-gray-600 hover:text-cw-primary hover:bg-cw-primary/5">Loans</a>
+  <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-cw-gray-600 hover:text-cw-primary hover:bg-cw-primary/5">Cards</a>
+  <a href="#" class="block px-3 py-2 rounded-lg text-sm font-medium text-cw-gray-600 hover:text-cw-primary hover:bg-cw-primary/5">Insurance</a>
+</div>
+<script>
+function toggleMobileMenu() {
+  const m = document.getElementById('mobile-menu');
+  m.classList.toggle('hidden');
+}
+</script>
 
-  <div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
     <!-- Welcome Banner -->
     <div class="mb-8">
@@ -93,7 +109,7 @@
 
     <!-- Home Loan Promotional Banner -->
     <a href="home-loan.html" class="block mb-8 group">
-      <div class="banner-shine bg-gradient-to-r from-cw-primary via-cw-primary-dark to-cw-primary rounded-2xl p-8 text-white cursor-pointer group-hover:shadow-2xl transition-shadow duration-300">
+      <div class="banner-shine bg-gradient-to-r from-cw-primary via-cw-primary-dark to-cw-primary rounded-2xl p-5 sm:p-8 text-white cursor-pointer group-hover:shadow-2xl transition-shadow duration-300">
         <div class="flex items-center justify-between">
           <div class="space-y-3">
             <div class="inline-flex items-center space-x-2 bg-cw-accent/20 px-3 py-1 rounded-full">
@@ -106,7 +122,7 @@
             <p class="text-white/80 text-sm max-w-md">
               Attractive home loan rates just for you, Ashish! Get pre-approved in minutes with our AI-powered eligibility check. Zero processing fee for a limited time.
             </p>
-            <div class="flex items-center space-x-6 text-sm text-white/60">
+            <div class="flex flex-wrap gap-3 text-sm text-white/60">
               <div class="flex items-center space-x-1">
                 <svg class="w-4 h-4 text-cw-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                 <span>Up to ₹5 Cr</span>
@@ -216,7 +232,7 @@
           <a href="#" class="text-xs text-cw-primary font-medium hover:underline">View All</a>
         </div>
         <div class="divide-y divide-cw-gray-100">
-          <div class="px-6 py-4 flex items-center justify-between">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -228,7 +244,7 @@
             </div>
             <span class="text-sm font-semibold text-red-500">- ₹458</span>
           </div>
-          <div class="px-6 py-4 flex items-center justify-between">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"/></svg>
@@ -240,7 +256,7 @@
             </div>
             <span class="text-sm font-semibold text-emerald-500">+ ₹1,50,000</span>
           </div>
-          <div class="px-6 py-4 flex items-center justify-between">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -252,7 +268,7 @@
             </div>
             <span class="text-sm font-semibold text-red-500">- ₹5,000</span>
           </div>
-          <div class="px-6 py-4 flex items-center justify-between">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -264,7 +280,7 @@
             </div>
             <span class="text-sm font-semibold text-red-500">- ₹12,999</span>
           </div>
-          <div class="px-6 py-4 flex items-center justify-between">
+          <div class="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -336,7 +352,7 @@
 
   <!-- Footer -->
   <footer class="bg-white border-t border-cw-gray-200 py-6">
-    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-cw-gray-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cw-gray-400">
       <span>&copy; 2026 Cymbal Wealth. All rights reserved.</span>
       <span>Demo Application — Powered by Google Gemini</span>
     </div>

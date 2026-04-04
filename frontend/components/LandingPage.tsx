@@ -19,33 +19,38 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
             <a href="#about" className="hover:text-idfc-maroon transition-colors">About</a>
             <a href="#contact" className="hover:text-idfc-maroon transition-colors">Contact</a>
           </nav>
+          <button className="md:hidden p-2 text-idfc-gray-600 hover:text-idfc-maroon" aria-label="Menu">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
       </header>
 
       {/* Hero */}
       <section className="flex-1 flex items-center bg-gradient-to-br from-white via-idfc-gray-50 to-idfc-maroon/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           <div className="space-y-8">
             <div>
               <p className="text-sm font-semibold text-idfc-maroon uppercase tracking-wider mb-3">
                 Wealth Management
               </p>
-              <h1 className="text-5xl font-extrabold text-idfc-gray-900 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-idfc-gray-900 leading-tight">
                 Your Wealth,
                 <br />
                 <span className="text-idfc-maroon">Our Expertise</span>
               </h1>
-              <p className="mt-6 text-xl text-idfc-gray-600 leading-relaxed max-w-lg">
+              <p className="mt-6 text-base sm:text-lg md:text-xl text-idfc-gray-600 leading-relaxed max-w-lg">
                 Cymbal Wealth offers personalized wealth management, investment
                 advisory, and financial planning services to help you build and
                 preserve your legacy.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
               <button
                 onClick={onStartKYC}
-                className="px-8 py-4 bg-idfc-maroon hover:bg-idfc-maroon-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+                className="w-full sm:w-auto px-8 py-4 bg-idfc-maroon hover:bg-idfc-maroon-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -54,7 +59,7 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
               </button>
               <button
                 onClick={onStartInvestments}
-                className="px-8 py-4 bg-idfc-maroon hover:bg-idfc-maroon-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+                className="w-full sm:w-auto px-8 py-4 bg-idfc-maroon hover:bg-idfc-maroon-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -70,7 +75,7 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
             </div>
 
             {/* Trust badges */}
-            <div className="flex items-center space-x-6 pt-4">
+            <div className="flex flex-wrap gap-4 pt-4">
               <div className="flex items-center space-x-2 text-idfc-gray-500">
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -173,7 +178,7 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
       {/* CTA Banner */}
       <section className="bg-idfc-maroon">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div>
+          <div className="text-center md:text-left">
             <h2 className="text-2xl font-bold text-white">Ready to get started?</h2>
             <p className="text-white/80 mt-1">
               Complete your Video KYC in minutes and unlock all Cymbal Wealth services — including AI-generated hyper-personalized video ads for your portfolio.
