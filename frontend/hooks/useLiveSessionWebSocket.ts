@@ -86,17 +86,19 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   const updateOrAddTranscription = useCallback(
     (role: "user" | "agent", text: string, finished: boolean, idRef: React.MutableRefObject<string | null>) => {
       if (idRef.current) {
-        // Update existing in-progress message
+        // APPEND delta to existing in-progress bubble — Gemini sends incremental chunks
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === idRef.current ? { ...m, text, timestamp: new Date() } : m
+            m.id === idRef.current
+              ? { ...m, text: m.text + (m.text.endsWith(" ") || text.startsWith(" ") ? "" : " ") + text, timestamp: new Date() }
+              : m
           )
         );
         if (finished) {
           idRef.current = null;
         }
       } else {
-        // Create new message
+        // Create new bubble for the start of a new utterance
         const id = crypto.randomUUID();
         const msg: ChatMessage = {
           id,
