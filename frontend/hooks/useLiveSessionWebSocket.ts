@@ -67,6 +67,8 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   // Track in-progress transcription message IDs for live updates
   const inputTranscriptionIdRef = useRef<string | null>(null);
   const outputTranscriptionIdRef = useRef<string | null>(null);
+  // Client-side buffer for output transcription (handles both cumulative and delta chunks)
+  const outputTextBufferRef = useRef<string>("");
 
   const addMessage = useCallback(
     (role: "user" | "agent", text: string, source?: "text" | "transcription") => {
@@ -83,34 +85,73 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
     []
   );
 
-  const updateOrAddTranscription = useCallback(
-    (role: "user" | "agent", text: string, finished: boolean, idRef: React.MutableRefObject<string | null>) => {
-      if (idRef.current) {
-        // APPEND delta to existing in-progress bubble — Gemini sends incremental chunks
+  /**
+   * Input transcription: Gemini sends growing cumulative partials per utterance.
+   * ("Hello" → "Hello my" → "Hello my name is Ashish")
+   * So we REPLACE the bubble text each time — the latest value is always the fullest.
+   */
+  const updateInputTranscription = useCallback(
+    (text: string, finished: boolean) => {
+      if (inputTranscriptionIdRef.current) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === idRef.current
-              ? { ...m, text: m.text + (m.text.endsWith(" ") || text.startsWith(" ") ? "" : " ") + text, timestamp: new Date() }
+            m.id === inputTranscriptionIdRef.current
+              ? { ...m, text, timestamp: new Date() }
+              : m
+          )
+        );
+        if (finished) inputTranscriptionIdRef.current = null;
+      } else {
+        const id = crypto.randomUUID();
+        setMessages((prev) => [...prev, { id, role: "user", text, timestamp: new Date(), source: "transcription" } as ChatMessage]);
+        if (!finished) inputTranscriptionIdRef.current = id;
+      }
+    },
+    []
+  );
+
+  /**
+   * Output transcription: chunks can arrive as either cumulative or delta.
+   * Buffer heuristic (from cymbal-shop reference):
+   * - If new text is longer AND starts with same prefix → server accumulating, REPLACE buffer
+   * - Otherwise → new chunk, APPEND to buffer
+   * DOM bubble always receives the full buffer content (REPLACE not append in DOM).
+   */
+  const updateOutputTranscription = useCallback(
+    (text: string, finished: boolean) => {
+      const buf = outputTextBufferRef.current;
+      let newBuf: string;
+
+      if (buf && text.length > buf.length && text.startsWith(buf.substring(0, Math.min(10, buf.length)))) {
+        // Cumulative — server already has the full text, use it
+        newBuf = text;
+      } else if (buf && !text.startsWith(buf.substring(0, Math.min(10, buf.length)))) {
+        // New distinct chunk — append
+        newBuf = buf + (buf.endsWith(" ") ? "" : " ") + text;
+      } else {
+        // First chunk or exact match
+        newBuf = text;
+      }
+      outputTextBufferRef.current = newBuf;
+
+      const displayText = newBuf.trim();
+      if (outputTranscriptionIdRef.current) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === outputTranscriptionIdRef.current
+              ? { ...m, text: displayText, timestamp: new Date() }
               : m
           )
         );
         if (finished) {
-          idRef.current = null;
+          outputTranscriptionIdRef.current = null;
+          outputTextBufferRef.current = "";
         }
       } else {
-        // Create new bubble for the start of a new utterance
         const id = crypto.randomUUID();
-        const msg: ChatMessage = {
-          id,
-          role,
-          text,
-          timestamp: new Date(),
-          source: "transcription",
-        };
-        setMessages((prev) => [...prev, msg]);
-        if (!finished) {
-          idRef.current = id;
-        }
+        setMessages((prev) => [...prev, { id, role: "agent", text: displayText, timestamp: new Date(), source: "transcription" } as ChatMessage]);
+        if (!finished) outputTranscriptionIdRef.current = id;
+        else outputTextBufferRef.current = "";
       }
     },
     []
@@ -175,33 +216,31 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
           }
           case "input_transcription": {
             if (data.text && data.text.trim()) {
-              updateOrAddTranscription("user", data.text, !!data.finished, inputTranscriptionIdRef);
-            } else if (data.finished && inputTranscriptionIdRef.current) {
-              // finished=true arrived with no text — clear the stale ref
+              updateInputTranscription(data.text.trim(), !!data.finished);
+            } else if (data.finished) {
               inputTranscriptionIdRef.current = null;
             }
             break;
           }
           case "output_transcription": {
             if (data.text && data.text.trim()) {
-              updateOrAddTranscription("agent", data.text.trim(), !!data.finished, outputTranscriptionIdRef);
-            } else if (data.finished && outputTranscriptionIdRef.current) {
-              // finished=true arrived with no text — clear the stale ref
+              updateOutputTranscription(data.text.trim(), !!data.finished);
+            } else if (data.finished) {
               outputTranscriptionIdRef.current = null;
+              outputTextBufferRef.current = "";
             }
             break;
           }
           case "turn_complete": {
-            // Agent turn ended — ensure the output transcription ref is cleared.
-            // This is the safety net when finished=true never arrives (e.g. very
-            // short responses where the transcription event fires simultaneously).
+            // Safety net: clear output transcription state when agent turn ends
             outputTranscriptionIdRef.current = null;
+            outputTextBufferRef.current = "";
             break;
           }
           case "interrupted": {
-            // User interrupted the agent — audio cut off, no finished=true will arrive.
-            // Clear the ref so the next agent turn creates a fresh bubble.
+            // User interrupted — clear output state, input stays (user was speaking)
             outputTranscriptionIdRef.current = null;
+            outputTextBufferRef.current = "";
             break;
           }
           case "pong":
@@ -212,7 +251,7 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
         console.error("[WS] Failed to parse message:", e);
       }
     },
-    [addMessage, updateOrAddTranscription, playNextAudio]
+    [addMessage, updateInputTranscription, updateOutputTranscription, playNextAudio]
   );
 
   const sendMessage = useCallback((msg: ClientMessage) => {
@@ -285,10 +324,10 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
       if (wsRef.current) return;
       setConnectionState(ConnectionState.CONNECTING);
       setMessages([]);
-      // Reset transcription ID refs so stale IDs from a previous session
-      // don't cause new transcriptions to silently update non-existent messages.
+      // Reset transcription state so stale refs don't bleed between sessions
       inputTranscriptionIdRef.current = null;
       outputTranscriptionIdRef.current = null;
+      outputTextBufferRef.current = "";
 
       const userId = `user-${crypto.randomUUID().slice(0, 8)}`;
       const sessionId = `session-${crypto.randomUUID().slice(0, 8)}`;
