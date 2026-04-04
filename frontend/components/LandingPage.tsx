@@ -115,6 +115,15 @@ export default function LandingPage({ onStartKYC }: LandingPageProps) {
                 title: "Tax Optimization",
                 desc: "Strategic tax planning to maximize your after-tax returns.",
               },
+              {
+                icon: (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  </svg>
+                ),
+                title: "Hyper-Personalized Marketing",
+                desc: "AI-generated 30-second video ads tailored to your profile — powered by GenFlow Ad Studio with Gemini 3.1 Pro, Veo 3.1 & Imagen 4.",
+              },
             ].map((card, i) => (
               <div
                 key={i}
@@ -139,7 +148,7 @@ export default function LandingPage({ onStartKYC }: LandingPageProps) {
           <div>
             <h2 className="text-2xl font-bold text-white">Ready to get started?</h2>
             <p className="text-white/80 mt-1">
-              Complete your Video KYC in minutes and unlock all Cymbal Wealth services.
+              Complete your Video KYC in minutes and unlock all Cymbal Wealth services — including AI-generated hyper-personalized video ads for your portfolio.
             </p>
           </div>
           <button

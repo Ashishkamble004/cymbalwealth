@@ -1,0 +1,60 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-adstudio"
+    args:
+      [
+        "build",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cymbalwealth-adstudio:${_TAG}",
+        "./genflow-ad-studio",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-adstudio"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cymbalwealth-adstudio:${_TAG}",
+      ]
+    waitFor: ["build-adstudio"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-adstudio"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "cymbalwealth-adstudio",
+        "--image",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cymbalwealth-adstudio:${_TAG}",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+        "--allow-unauthenticated",
+        "--memory",
+        "4Gi",
+        "--cpu",
+        "2",
+        "--timeout",
+        "900",
+        "--port",
+        "8000",
+        "--set-env-vars",
+        "GCS_BUCKET_NAME=${_GCS_BUCKET},REGION=${_REGION},PROJECT_ID=${PROJECT_ID},VEO_MODEL_ID=veo-3.1-generate-preview,GEMINI_MODEL=gemini-3.1-pro-preview,IMAGE_MODEL=gemini-3-pro-image-preview,IMAGE_REGION=global,TEXT_REGION=global",
+      ]
+    waitFor: ["push-adstudio"]
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cymbalwealth-adstudio"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _TAG: latest
+  _GCS_BUCKET: general-ak-adstudio
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8

@@ -3,12 +3,16 @@
 Reduces 2 sequential LLM calls to 1.
 """
 
-import os
 from google.adk.agents import Agent
+from google.genai import types
 
 property_eligibility_agent = Agent(
     name="property_eligibility_agent",
-    model=os.getenv("HOME_LOAN_MODEL", "gemini-2.5-flash"),
+    model="gemini-2.5-flash",
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    ),
     output_key="property_eligibility_result",
     instruction="""## PROPERTY & ELIGIBILITY AGENT — Cymbal Wealth Home Loans
 

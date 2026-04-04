@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import wave
-from datetime import datetime
+from datetime import datetime, timezone
 
 import cv2
 import numpy as np
@@ -39,7 +39,7 @@ def _upload_to_gcs(blob_path: str, data: bytes, content_type: str):
 
 def get_session_filename(reference_number: str, session_id: str) -> str:
     """Generate a consistent filename for a session across all folders."""
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     return f"{reference_number}_{session_id}_{ts}"
 
 
@@ -49,7 +49,7 @@ def save_transcript(reference_number: str, session_id: str, session_filename: st
         "user_id": user_id,
         "session_id": session_id,
         "reference_number": reference_number,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "transcript": transcript,
     }
     payload_json = json.dumps(payload, indent=2, ensure_ascii=False)

@@ -236,6 +236,7 @@ async function startVerification() {
   indicatorEl.classList.add('bg-green-400');
   document.getElementById('startBtn').disabled = true;
   document.getElementById('startBtn').classList.add('opacity-50','cursor-not-allowed');
+  document.getElementById('startBtn').querySelector('span').textContent = 'Verifying...';
 
   const docs = JSON.parse(sessionStorage.getItem('homeloan_docs') || '{}');
   const appRef = sessionStorage.getItem('homeloan_ref') || '';
@@ -277,7 +278,28 @@ async function startVerification() {
     addLog('⚠️ No session data — using default applicant details', 'warn');
   }
 
-  // Call the real backend API
+  let activeAgentId = null;
+  let result = null;
+  const allStreamedTexts = [];
+
+  function resolveAgentId(name) {
+    if (!name) return null;
+    const n = name.toLowerCase();
+    if (n.includes('doc_quality') || n.includes('classifier') || n.includes('duplicate')) return 'doc_quality';
+    if (n.includes('identity_income') || n.includes('identity') || n.includes('income')) return 'identity_income';
+    if (n.includes('property_eligibility') || n.includes('property') || n.includes('eligibility')) return 'property_eligibility';
+    if (n.includes('parallel')) return 'orchestrator';
+    if (n.includes('orchestrator') || n.includes('sequential') || n.includes('home_loan')) return 'orchestrator';
+    return null;
+  }
+
+  const agentDisplayNames = {
+    'doc_quality': 'Document Quality Agent',
+    'identity_income': 'Identity & Income Agent',
+    'property_eligibility': 'Property & Eligibility Agent',
+    'orchestrator': 'Orchestrator Agent',
+  };
+
   try {
     const verifyPayload = {
       application_ref: appRef || `${applicantPan}_${Date.now()}`,
@@ -292,8 +314,7 @@ async function startVerification() {
       documents: gcsDocPaths,
     };
 
-    addLog(`📤 POST ${API_BASE}/verify`, 'info');
-    addLog(`   Payload: ${JSON.stringify({...verifyPayload, documents: `{${Object.keys(gcsDocPaths).length} docs}`})}`, 'info');
+    addLog(`📤 POST ${API_BASE}/verify (streaming)`, 'info');
 
     const resp = await fetch(`${API_BASE}/verify`, {
       method: 'POST',
@@ -306,85 +327,71 @@ async function startVerification() {
       throw new Error(`API returned ${resp.status}: ${errText}`);
     }
 
-    addLog('', 'info');
-    addLog('📥 Streaming results from multi-agent pipeline...', 'success');
-    addLog('', 'info');
+    addLog('📥 Streaming results from Agent Engine pipeline...', 'success');
 
-    let activeAgentId = null;
-    let result = null;
-    const allStreamedTexts = []; // collect all text entries for final pass/fail check
+    // Process NDJSON stream line by line as it arrives
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
 
-    function resolveAgentId(name) {
-      if (!name) return null;
-      const n = name.toLowerCase();
-      if (n.includes('doc_quality') || n.includes('classifier') || n.includes('duplicate')) return 'doc_quality';
-      if (n.includes('identity_income') || n.includes('identity') || n.includes('income')) return 'identity_income';
-      if (n.includes('property_eligibility') || n.includes('property') || n.includes('eligibility')) return 'property_eligibility';
-      if (n.includes('parallel')) return 'orchestrator';
-      if (n.includes('orchestrator') || n.includes('sequential')) return 'orchestrator';
-      return null;
-    }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete trailing line in buffer
 
-    const agentDisplayNames = {
-      'doc_quality': 'Document Quality Agent',
-      'identity_income': 'Identity & Income Agent',
-      'property_eligibility': 'Property & Eligibility Agent',
-      'orchestrator': 'Orchestrator Agent',
-    };
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let evt;
+        try { evt = JSON.parse(line); } catch { continue; }
 
-    // Parse JSON response (Agent Engine returns clean JSON)
-    result = await resp.json();
+        if (evt.type === 'status') {
+          addLog(`📡 ${evt.message}`, 'info');
 
-    addLog(`📥 Pipeline completed | Docs: ${result.documents_processed} | Agent Engine: ${result.agent_engine_id || 'N/A'}`, 'success');
-    addLog(`   GCS: ${result.gcs_folder || 'N/A'}`, 'info');
-    setAgentStatus('orchestrator', 'done');
-
-    // Process each verification result
-    for (const entry of (result.verification_results || [])) {
-      const agentId = resolveAgentId(entry.agent);
-
-      // Handle text output from agents
-      if (entry.text) {
-        allStreamedTexts.push(entry.text);
-
-        // Update agent card status
-        if (agentId && agentId !== 'orchestrator' && agentId !== activeAgentId) {
-          if (activeAgentId && activeAgentId !== 'orchestrator') {
-            setAgentStatus(activeAgentId, 'done');
+        } else if (evt.type === 'agent_result') {
+          const agentId = resolveAgentId(evt.agent);
+          if (agentId && agentId !== activeAgentId) {
+            if (activeAgentId && activeAgentId !== 'orchestrator') {
+              setAgentStatus(activeAgentId, 'done');
+            }
+            setAgentStatus(agentId, 'running');
+            activeAgentId = agentId;
+            addLog(`🔄 ${agentDisplayNames[agentId] || evt.agent} processing...`, 'agent');
           }
-          setAgentStatus(agentId, 'running');
-          activeAgentId = agentId;
-          addLog(`🔄 ${agentDisplayNames[agentId] || entry.agent} processing...`, 'agent');
-        }
-
-        // Log each line with color
-        const lines = entry.text.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-          const t = line.trim();
-          if (t.includes('FAIL') || t.includes('REJECT') || t.includes('MISMATCH') || t.includes('DUPLICATE')) {
-            addLog(`  ${t}`, 'error');
-          } else if (t.includes('PASS') || t.includes('VERIFIED') || t.includes('verified') || t.includes('match') || t.includes('Consistent')) {
-            addLog(`  ${t}`, 'success');
-          } else if (t.includes('WARNING') || t.includes('REVIEW')) {
-            addLog(`  ${t}`, 'warn');
-          } else if (t.startsWith('#') || t.startsWith('**') || t.startsWith('===')) {
-            addLog(`  ${t}`, 'agent');
-          } else {
-            addLog(`  ${t}`, 'info');
+          allStreamedTexts.push(evt.text);
+          const textLines = evt.text.split('\n').filter(l => l.trim());
+          for (const tl of textLines) {
+            const t = tl.trim();
+            if (t.includes('FAIL') || t.includes('REJECT') || t.includes('MISMATCH') || t.includes('DUPLICATE')) {
+              addLog(`  ${t}`, 'error');
+            } else if (t.includes('PASS') || t.includes('VERIFIED') || t.includes('verified') || t.includes('match') || t.includes('Consistent')) {
+              addLog(`  ${t}`, 'success');
+            } else if (t.includes('WARNING') || t.includes('REVIEW')) {
+              addLog(`  ${t}`, 'warn');
+            } else if (t.startsWith('#') || t.startsWith('**') || t.startsWith('===')) {
+              addLog(`  ${t}`, 'agent');
+            } else {
+              addLog(`  ${t}`, 'info');
+            }
           }
-        }
-
-        // Show in agent card
-        const cardId = agentId || activeAgentId;
-        if (cardId && cardId !== 'orchestrator') {
-          const resultEl = document.getElementById(`result-${cardId}`);
-          const escapedText = entry.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          if (resultEl && resultEl.classList.contains('hidden')) {
-            showResult(cardId, `<div class="mt-2 bg-cw-gray-50 rounded-lg p-3 text-xs text-cw-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">${escapedText}</div>`);
-          } else if (resultEl) {
-            const inner = resultEl.querySelector('.bg-cw-gray-50');
-            if (inner) inner.innerHTML += `<div class="border-t border-cw-gray-200 mt-2 pt-2">${escapedText}</div>`;
+          const cardId = agentId || activeAgentId;
+          if (cardId && cardId !== 'orchestrator') {
+            const resultEl = document.getElementById(`result-${cardId}`);
+            const escapedText = evt.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            if (resultEl && resultEl.classList.contains('hidden')) {
+              showResult(cardId, `<div class="mt-2 bg-cw-gray-50 rounded-lg p-3 text-xs text-cw-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">${escapedText}</div>`);
+            } else if (resultEl) {
+              const inner = resultEl.querySelector('.bg-cw-gray-50');
+              if (inner) inner.innerHTML += `<div class="border-t border-cw-gray-200 mt-2 pt-2">${escapedText}</div>`;
+            }
           }
+
+        } else if (evt.type === 'error') {
+          throw new Error(evt.message);
+
+        } else if (evt.type === 'complete') {
+          result = evt;
         }
       }
     }
@@ -396,8 +403,7 @@ async function startVerification() {
         setAgentStatus(id, 'done');
       }
     }
-
-    // Check if there were failures using ALL streamed text (not dependent on result object)
+    setAgentStatus('orchestrator', 'done');
     const fullText = allStreamedTexts.join(' ').toLowerCase();
     const hasFailure = fullText.includes('fail') || fullText.includes('reject') || fullText.includes('duplicate detected') || fullText.includes('mismatch');
 
@@ -468,6 +474,9 @@ async function startVerification() {
     setAgentStatus('orchestrator', 'error');
     indicatorEl.classList.remove('pulse-dot', 'bg-green-400');
     indicatorEl.classList.add('bg-red-400');
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').classList.remove('opacity-50','cursor-not-allowed');
+    document.getElementById('startBtn').querySelector('span').textContent = 'Retry Verification';
 
     // Show error summary
     const summaryCard = document.getElementById('summary-card');

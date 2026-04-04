@@ -1,4 +1,4 @@
-google-adk
+google-adk>=1.27.4
 google-genai
 google-cloud-storage
 opentelemetry-instrumentation-google-genai

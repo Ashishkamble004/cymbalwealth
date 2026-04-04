@@ -3,12 +3,16 @@
 Reduces 2 sequential LLM calls to 1 by verifying PAN, Aadhaar, and salary documents together.
 """
 
-import os
 from google.adk.agents import Agent
+from google.genai import types
 
 identity_income_agent = Agent(
     name="identity_income_agent",
-    model=os.getenv("HOME_LOAN_MODEL", "gemini-2.5-flash"),
+    model="gemini-2.5-flash",
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    ),
     output_key="identity_income_result",
     instruction="""## IDENTITY & INCOME VERIFICATION AGENT — Cymbal Wealth Home Loans
 

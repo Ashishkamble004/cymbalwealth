@@ -6,14 +6,20 @@ Architecture:
 - Agent Engine ID: projects/769002985772/locations/us-central1/reasoningEngines/5257055913222602752
 """
 
+import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+import threading
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import vertexai
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from vertexai import agent_engines
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +34,98 @@ PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "general-ak")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 
 
-# --- Models ---
+# ---------------------------------------------------------------------------
+# Agent Engine session pool
+# ---------------------------------------------------------------------------
+# Agent Engine sessions take ~6s to create. This pool pre-warms a fixed number
+# of sessions at startup so every incoming verify request starts immediately.
+# After consuming a session the pool refills itself in the background.
+# ---------------------------------------------------------------------------
+
+class _AgentSessionPool:
+    """Pre-warms Vertex AI Agent Engine sessions to eliminate per-request latency."""
+
+    POOL_SIZE = 3  # number of sessions to keep ready
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._agent = None          # cached agent_engines handle
+        self._queue: asyncio.Queue | None = None
+
+    # -- internals (run in thread-pool executor) ----------------------------
+
+    def _init_agent(self):
+        """Cache the agent handle. Called once from a thread."""
+        with self._lock:
+            if self._agent is None:
+                vertexai.init(project=PROJECT_ID, location=LOCATION)
+                self._agent = agent_engines.get(AGENT_ENGINE_ID)
+                logger.info("[Pool] Agent Engine handle cached")
+        return self._agent
+
+    def _create_session_sync(self) -> tuple[str, str]:
+        """Create one session synchronously and return (session_id, user_id)."""
+        agent = self._init_agent()
+        uid = f"pool-{uuid.uuid4().hex[:8]}"
+        session = agent.create_session(user_id=uid)
+        sid = (
+            session.get("id") if isinstance(session, dict)
+            else getattr(session, "id", str(session))
+        )
+        return sid, uid
+
+    # -- async interface ----------------------------------------------------
+
+    async def warmup(self):
+        """Pre-create POOL_SIZE sessions concurrently. Called once on startup."""
+        self._queue = asyncio.Queue()
+        loop = asyncio.get_event_loop()
+
+        async def _one(idx):
+            try:
+                sid, uid = await loop.run_in_executor(None, self._create_session_sync)
+                await self._queue.put((sid, uid))
+                logger.info(f"[Pool] Slot {idx} ready — session {sid}")
+            except Exception as exc:
+                logger.warning(f"[Pool] Warmup slot {idx} failed: {exc}")
+
+        await asyncio.gather(*[_one(i) for i in range(self.POOL_SIZE)])
+        logger.info(f"[Pool] Warmup complete — {self._queue.qsize()} sessions ready")
+
+    async def acquire(self) -> tuple[object, str, str]:
+        """Return (agent, session_id, user_id). Instant if pool has a session."""
+        if self._queue is None or self._queue.empty():
+            logger.info("[Pool] Empty — creating session on-demand")
+            loop = asyncio.get_event_loop()
+            sid, uid = await loop.run_in_executor(None, self._create_session_sync)
+        else:
+            sid, uid = self._queue.get_nowait()
+            logger.info(f"[Pool] Issued pre-warmed session {sid} — {self._queue.qsize()} remaining")
+
+        # Replenish the consumed slot in the background
+        asyncio.create_task(self._refill())
+        return self._agent, sid, uid
+
+    async def _refill(self):
+        """Add one new session back to the pool."""
+        try:
+            loop = asyncio.get_event_loop()
+            sid, uid = await loop.run_in_executor(None, self._create_session_sync)
+            await self._queue.put((sid, uid))
+            logger.info(f"[Pool] Refilled — session {sid} | pool size {self._queue.qsize()}")
+        except Exception as exc:
+            logger.warning(f"[Pool] Refill failed: {exc}")
+
+    def acquire_sync(self, loop: asyncio.AbstractEventLoop) -> tuple[object, str, str]:
+        """Blocking wrapper for use inside worker threads."""
+        future = asyncio.run_coroutine_threadsafe(self.acquire(), loop)
+        return future.result(timeout=30)
+
+
+_pool = _AgentSessionPool()
+
+
+
 
 class UploadUrlRequest(BaseModel):
     applicant_pan: str
@@ -60,7 +157,7 @@ class VerifyRequest(BaseModel):
 @router.post("/upload-urls", response_model=UploadUrlResponse)
 async def get_upload_urls(request: UploadUrlRequest):
     """Generate direct upload paths for documents."""
-    app_ref = f"{request.applicant_pan}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+    app_ref = f"{request.applicant_pan}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
     gcs_folder = f"home-loan/{app_ref}"
 
     upload_urls = {}
@@ -155,7 +252,7 @@ async def verify_documents(request: VerifyRequest):
         raise HTTPException(status_code=400, detail="No documents could be read from GCS")
 
     # Build multimodal prompt: text instructions + file_data references for binary docs
-    today_str = datetime.utcnow().strftime("%d %B %Y")
+    today_str = datetime.now(timezone.utc).strftime("%d %B %Y")
     prompt_text = f"""## HOME LOAN VERIFICATION REQUEST
 
 ### TODAY'S DATE: {today_str}
@@ -215,79 +312,105 @@ async def verify_documents(request: VerifyRequest):
         prompt = prompt_text
         logger.info(f"[HomeLoan] Text-only message ({len(prompt_text)} chars)")
 
-    # Call Agent Engine via Vertex AI Python SDK
-    import vertexai
-    from vertexai import agent_engines
+    # Stream results from Agent Engine via NDJSON (fixes event parsing + gives real-time UI feedback)
+    async def _generate():
+        yield json.dumps({"type": "status", "message": f"Loaded {len(documents)} docs | Connecting to Agent Engine..."}) + "\n"
 
-    vertexai.init(project=PROJECT_ID, location=LOCATION)
+        loop = asyncio.get_event_loop()
+        queue: asyncio.Queue = asyncio.Queue()
+        results: list = []
 
-    try:
-        # Get the deployed agent
-        remote_agent = agent_engines.get(AGENT_ENGINE_ID)
-        logger.info(f"[HomeLoan] Connected to Agent Engine: {AGENT_ENGINE_ID}")
+        def _parse_event(event):
+            """Return (author, text) from Agent Engine event.
 
-        # Create a session
-        user_id = f"homeloan-{request.applicant_pan}"
-        session = remote_agent.create_session(user_id=user_id)
-        session_id = session.get("id") if isinstance(session, dict) else getattr(session, "id", str(session))
-        logger.info(f"[HomeLoan] Session created: {session_id}")
-
-        # Stream query to the agent
-        results = []
-        for event in remote_agent.stream_query(
-            user_id=user_id,
-            session_id=session_id,
-            message=prompt,
-        ):
-            # Extract author and text from each event
-            author = getattr(event, "author", None) or "orchestrator"
-
-            # Check for content.parts
-            content = getattr(event, "content", None)
-            if content and hasattr(content, "parts"):
-                for part in content.parts:
-                    text = getattr(part, "text", None)
+            Agent Engine SDK may return events as plain dicts (REST transport) or
+            as ADK Event objects (gRPC transport). Handle both.
+            """
+            if isinstance(event, dict):
+                author = event.get("author") or "orchestrator"
+                raw = event.get("content") or {}
+                parts = raw.get("parts", []) if isinstance(raw, dict) else (getattr(raw, "parts", None) or [])
+                for part in parts:
+                    text = part.get("text") if isinstance(part, dict) else getattr(part, "text", None)
                     if text:
-                        results.append({
-                            "agent": author,
-                            "text": text,
-                            "timestamp": datetime.utcnow().isoformat(),
-                        })
-                        logger.info(f"[HomeLoan] [{author}] {text[:200]}")
+                        return author, text
+            else:
+                author = getattr(event, "author", None) or "orchestrator"
+                content = getattr(event, "content", None)
+                if content:
+                    for part in (getattr(content, "parts", None) or []):
+                        text = getattr(part, "text", None)
+                        if text:
+                            return author, text
+            return None, None
 
-            # Check for actions (function calls = agent handoffs)
-            actions = getattr(event, "actions", None)
-            if actions:
-                fc_list = getattr(actions, "function_calls", None)
-                if fc_list:
-                    for fc in fc_list:
-                        results.append({
-                            "agent": author,
-                            "type": "agent_handoff",
-                            "target_agent": getattr(fc, "name", "unknown"),
-                            "timestamp": datetime.utcnow().isoformat(),
-                        })
+        def _run_agent():
+            try:
+                # Acquire a pre-warmed session from the pool (usually instant)
+                remote_agent, session_id, _ = _pool.acquire_sync(loop)
+                user_id = f"homeloan-{request.applicant_pan}"
+                logger.info(f"[HomeLoan] Using session: {session_id}")
+                loop.call_soon_threadsafe(queue.put_nowait, {
+                    "type": "status",
+                    "message": "Agent Engine session ready | Running verification pipeline..."
+                })
 
-        logger.info(f"[HomeLoan] Collected {len(results)} events from Agent Engine")
+                for raw_event in remote_agent.stream_query(
+                    user_id=user_id, session_id=session_id, message=prompt
+                ):
+                    author, text = _parse_event(raw_event)
+                    if text:
+                        ts = datetime.now(timezone.utc).isoformat()
+                        entry = {"agent": author, "text": text, "timestamp": ts}
+                        results.append(entry)
+                        logger.info(f"[HomeLoan] [{author}] {text[:150]}")
+                        loop.call_soon_threadsafe(
+                            queue.put_nowait, {"type": "agent_result", **entry}
+                        )
 
-        # Store verification report in GCS
+                loop.call_soon_threadsafe(queue.put_nowait, {"type": "_done"})
+            except Exception as exc:
+                logger.error(f"[HomeLoan] Agent thread error: {exc}")
+                loop.call_soon_threadsafe(
+                    queue.put_nowait, {"type": "error", "message": str(exc)}
+                )
+
+        t = threading.Thread(target=_run_agent, daemon=True)
+        t.start()
+
+        # Yield events to the client as they arrive from the agent thread
+        while True:
+            item = await queue.get()
+            if item["type"] == "_done":
+                break
+            yield json.dumps(item) + "\n"
+            if item["type"] == "error":
+                break
+
+        t.join(timeout=10)
+
+        # Save verification report to GCS
         try:
             report_blob = bucket.blob(f"home-loan/{request.application_ref}/verification_report.json")
-            report_data = json.dumps({
-                "applicant": request.applicant_name,
-                "pan": request.applicant_pan,
-                "application_ref": request.application_ref,
-                "agent_engine_id": AGENT_ENGINE_ID,
-                "documents_verified": len(documents),
-                "results": results,
-                "timestamp": datetime.utcnow().isoformat(),
-            }, indent=2)
-            report_blob.upload_from_string(report_data, content_type="application/json")
-            logger.info(f"[HomeLoan] Report stored in GCS")
-        except Exception as e:
-            logger.error(f"[HomeLoan] Failed to store report: {e}")
+            report_blob.upload_from_string(
+                json.dumps({
+                    "applicant": request.applicant_name,
+                    "pan": request.applicant_pan,
+                    "application_ref": request.application_ref,
+                    "agent_engine_id": AGENT_ENGINE_ID,
+                    "documents_verified": len(documents),
+                    "results": results,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }, indent=2),
+                content_type="application/json",
+            )
+            logger.info(f"[HomeLoan] Report saved to GCS")
+        except Exception as exc:
+            logger.warning(f"[HomeLoan] GCS report save failed: {exc}")
 
-        return {
+        # Final summary event
+        yield json.dumps({
+            "type": "complete",
             "status": "completed",
             "applicant": request.applicant_name,
             "application_ref": request.application_ref,
@@ -295,12 +418,10 @@ async def verify_documents(request: VerifyRequest):
             "documents_processed": len(documents),
             "agent_engine_id": AGENT_ENGINE_ID,
             "verification_results": results,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }) + "\n"
 
-    except Exception as e:
-        logger.error(f"[HomeLoan] Agent Engine error: {e}")
-        raise HTTPException(status_code=500, detail=f"Agent Engine error: {str(e)}")
+    return StreamingResponse(_generate(), media_type="application/x-ndjson")
 
 
 @router.get("/health")

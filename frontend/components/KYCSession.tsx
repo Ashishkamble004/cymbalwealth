@@ -17,11 +17,13 @@ export default function KYCSession({
     messages,
     isMicActive,
     isCameraActive,
+    isRearCamera,
     videoRef,
     connect,
     disconnect,
     toggleMic,
     toggleCamera,
+    switchCamera,
     sendTextMessage,
   } = useLiveSessionWebSocket();
 
@@ -217,6 +219,18 @@ export default function KYCSession({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                 </svg>
               )}
+            </button>
+
+            {/* Switch camera (front/back) */}
+            <button
+              onClick={switchCamera}
+              disabled={!isConnected || !isCameraActive}
+              className="p-3 rounded-full bg-idfc-gray-600 hover:bg-idfc-gray-500 text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              title={isRearCamera ? "Switch to front camera" : "Switch to back camera"}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </button>
 
             {/* End call */}

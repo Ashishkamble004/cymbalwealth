@@ -4,9 +4,11 @@ Handles document uploads to GCS.
 Verification is routed to Vertex AI Agent Engine (multi-agent orchestration).
 """
 
+import asyncio
 import logging
 import os
 import warnings
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,16 +22,28 @@ os.environ.setdefault("GOOGLE_CLOUD_LOCATION", os.getenv("GCP_REGION", "us-centr
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from home_loan_api import router as home_loan_router
+from home_loan_api import router as home_loan_router, _pool
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
-app = FastAPI(title="Cymbal Wealth — Home Loan Service", version="2.0.0")
 
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://cymbalwealth.ak-demos.com,https://homeloan-gateway-9t9witd8.uc.gateway.dev").split(",")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-warm Agent Engine session pool on startup (non-blocking — runs in background)
+    asyncio.create_task(_pool.warmup())
+    yield
+
+
+app = FastAPI(
+    title="Cymbal Wealth — Home Loan Service",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://cymbalwealth.ak-demos.com").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

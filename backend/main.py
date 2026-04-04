@@ -11,7 +11,7 @@ import logging
 import os
 import traceback
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -99,6 +99,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
     output_audio_chunks: list[bytes] = []  # Agent audio (24kHz PCM)
     video_frames: list[bytes] = []         # JPEG frames
 
+    MAX_VIDEO_FRAMES = 1800  # ~30 min at 1 fps; prevents OOM on long sessions
+
     # Ensure session exists
     session = await session_service.get_session(
         app_name=APP_NAME, user_id=user_id, session_id=session_id
@@ -134,8 +136,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     if video_data:
                         image_bytes = base64.b64decode(video_data)
                         # Buffer for recording and store latest frame for captures
-                        video_frames.append(image_bytes)
-                        set_latest_frame(session_id, image_bytes)
+                        if len(video_frames) < MAX_VIDEO_FRAMES:
+                            video_frames.append(image_bytes)
+                        await set_latest_frame(session_id, image_bytes)
                         image_blob = types.Blob(
                             mime_type="image/jpeg",
                             data=image_bytes,
@@ -145,7 +148,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                 elif msg_type == "text":
                     text = data.get("data", "")
                     if text:
-                        transcript.append({"role": "user", "text": text, "ts": datetime.utcnow().isoformat()})
+                        transcript.append({"role": "user", "text": text, "ts": datetime.now(timezone.utc).isoformat()})
                         live_request_queue.send_content(
                             types.Content(
                                 parts=[types.Part(text=text)],
@@ -156,7 +159,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     reference_number = data.get("reference_number", "")
                     # Generate consistent session filename and store it
                     session_fname = get_session_filename(reference_number, session_id)
-                    set_session_filename(session_id, session_fname)
+                    await set_session_filename(session_id, session_fname)
 
                     context_text = (
                         f"The customer reference number is {reference_number}. "
@@ -245,6 +248,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                 if event.input_transcription:
                     if event.input_transcription.text:
                         finished = bool(event.input_transcription.finished)
+                        logger.debug(f"[WS] input_transcription finished={finished} text={event.input_transcription.text[:60]!r}")
                         await websocket.send_text(
                             json.dumps({
                                 "type": "input_transcription",
@@ -256,7 +260,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                             transcript.append({
                                 "role": "user",
                                 "text": event.input_transcription.text,
-                                "ts": datetime.utcnow().isoformat(),
+                                "ts": datetime.now(timezone.utc).isoformat(),
                                 "source": "transcription",
                             })
 
@@ -264,6 +268,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                 if event.output_transcription:
                     if event.output_transcription.text:
                         finished = bool(event.output_transcription.finished)
+                        logger.debug(f"[WS] output_transcription finished={finished} text={event.output_transcription.text[:60]!r}")
                         await websocket.send_text(
                             json.dumps({
                                 "type": "output_transcription",
@@ -275,7 +280,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                             transcript.append({
                                 "role": "agent",
                                 "text": event.output_transcription.text,
-                                "ts": datetime.utcnow().isoformat(),
+                                "ts": datetime.now(timezone.utc).isoformat(),
                                 "source": "transcription",
                             })
 
@@ -299,7 +304,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                             transcript.append({
                                 "role": "agent",
                                 "text": part.text,
-                                "ts": datetime.utcnow().isoformat(),
+                                "ts": datetime.now(timezone.utc).isoformat(),
                             })
                             await websocket.send_text(
                                 json.dumps({
@@ -324,7 +329,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
         # Save all session data to GCS
         if reference_number:
             from session_frames import get_session_filename as get_fname
-            session_fname = get_fname(session_id) or get_session_filename(reference_number, session_id)
+            session_fname = await get_fname(session_id) or get_session_filename(reference_number, session_id)
 
             # Save transcript
             if transcript:
@@ -349,7 +354,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     logger.error(f"[WS] Failed to save video recording: {e}")
 
         # Clean up shared state
-        clear_session(session_id)
+        await clear_session(session_id)
         logger.info(f"[WS] Session ended: user={user_id}, session={session_id}")
 
 

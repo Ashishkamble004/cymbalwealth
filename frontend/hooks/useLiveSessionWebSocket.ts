@@ -29,11 +29,13 @@ interface UseLiveSessionReturn {
   messages: ChatMessage[];
   isMicActive: boolean;
   isCameraActive: boolean;
+  isRearCamera: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   connect: (referenceNumber: string) => void;
   disconnect: () => void;
   toggleMic: () => void;
   toggleCamera: () => void;
+  switchCamera: () => Promise<void>;
   sendTextMessage: (text: string) => void;
 }
 
@@ -44,10 +46,12 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isMicActive, setIsMicActive] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isRearCamera, setIsRearCamera] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const facingModeRef = useRef<"user" | "environment">("user");
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const playbackContextRef = useRef<AudioContext | null>(null);
@@ -63,7 +67,6 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   // Track in-progress transcription message IDs for live updates
   const inputTranscriptionIdRef = useRef<string | null>(null);
   const outputTranscriptionIdRef = useRef<string | null>(null);
-  const outputTextBufferRef = useRef<string>("");
 
   const addMessage = useCallback(
     (role: "user" | "agent", text: string, source?: "text" | "transcription") => {
@@ -171,27 +174,32 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
           case "input_transcription": {
             if (data.text && data.text.trim()) {
               updateOrAddTranscription("user", data.text, !!data.finished, inputTranscriptionIdRef);
+            } else if (data.finished && inputTranscriptionIdRef.current) {
+              // finished=true arrived with no text — clear the stale ref
+              inputTranscriptionIdRef.current = null;
             }
             break;
           }
           case "output_transcription": {
             if (data.text && data.text.trim()) {
-              const buf = outputTextBufferRef.current;
-              const text = data.text;
-              // Accumulate: Gemini sends incremental chunks
-              if (text.length > buf.length && buf.length > 0 && text.startsWith(buf.substring(0, Math.min(10, buf.length)))) {
-                outputTextBufferRef.current = text;
-              } else if (buf && !text.startsWith(buf.substring(0, Math.min(10, buf.length)))) {
-                outputTextBufferRef.current = buf + " " + text;
-              } else {
-                outputTextBufferRef.current = text;
-              }
-              const displayText = outputTextBufferRef.current.trim();
-              updateOrAddTranscription("agent", displayText, !!data.finished, outputTranscriptionIdRef);
-              if (data.finished) {
-                outputTextBufferRef.current = "";
-              }
+              updateOrAddTranscription("agent", data.text.trim(), !!data.finished, outputTranscriptionIdRef);
+            } else if (data.finished && outputTranscriptionIdRef.current) {
+              // finished=true arrived with no text — clear the stale ref
+              outputTranscriptionIdRef.current = null;
             }
+            break;
+          }
+          case "turn_complete": {
+            // Agent turn ended — ensure the output transcription ref is cleared.
+            // This is the safety net when finished=true never arrives (e.g. very
+            // short responses where the transcription event fires simultaneously).
+            outputTranscriptionIdRef.current = null;
+            break;
+          }
+          case "interrupted": {
+            // User interrupted the agent — audio cut off, no finished=true will arrive.
+            // Clear the ref so the next agent turn creates a fresh bubble.
+            outputTranscriptionIdRef.current = null;
             break;
           }
           case "pong":
@@ -275,6 +283,10 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
       if (wsRef.current) return;
       setConnectionState(ConnectionState.CONNECTING);
       setMessages([]);
+      // Reset transcription ID refs so stale IDs from a previous session
+      // don't cause new transcriptions to silently update non-existent messages.
+      inputTranscriptionIdRef.current = null;
+      outputTranscriptionIdRef.current = null;
 
       const userId = `user-${crypto.randomUUID().slice(0, 8)}`;
       const sessionId = `session-${crypto.randomUUID().slice(0, 8)}`;
@@ -433,6 +445,52 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
     [sendMessage, addMessage]
   );
 
+  const switchCamera = useCallback(async () => {
+    if (!streamRef.current) return;
+
+    // Toggle facing mode
+    const newFacingMode = facingModeRef.current === "user" ? "environment" : "user";
+
+    // Stop current video track(s)
+    const oldVideoTracks = streamRef.current.getVideoTracks();
+    oldVideoTracks.forEach((t) => {
+      streamRef.current!.removeTrack(t);
+      t.stop();
+    });
+
+    try {
+      const newVideoStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: newFacingMode,
+        },
+      });
+
+      const newVideoTrack = newVideoStream.getVideoTracks()[0];
+      streamRef.current.addTrack(newVideoTrack);
+      facingModeRef.current = newFacingMode;
+      setIsRearCamera(newFacingMode === "environment");
+
+      // Re-bind video element to pick up the new track
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+        videoRef.current.srcObject = streamRef.current;
+      }
+
+      // Restart video frame capture with the updated stream
+      if (videoIntervalRef.current) {
+        clearInterval(videoIntervalRef.current);
+        videoIntervalRef.current = null;
+      }
+      startVideoCapture(streamRef.current);
+    } catch (err) {
+      console.error("[Media] Failed to switch camera:", err);
+      // Re-attach original track on failure so video keeps working
+      oldVideoTracks.forEach((t) => streamRef.current?.addTrack(t));
+    }
+  }, [startVideoCapture]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -445,11 +503,13 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
     messages,
     isMicActive,
     isCameraActive,
+    isRearCamera,
     videoRef,
     connect,
     disconnect,
     toggleMic,
     toggleCamera,
+    switchCamera,
     sendTextMessage,
   };
 }

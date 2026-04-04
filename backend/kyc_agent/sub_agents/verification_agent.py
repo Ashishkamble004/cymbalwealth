@@ -8,6 +8,7 @@ import os
 import logging
 from datetime import date
 from google.adk.agents import Agent
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -196,17 +197,17 @@ def capture_pan_card(reference_number: str, session_id: str) -> dict:
     Returns:
         Status of the capture operation.
     """
-    from session_frames import get_latest_frame, get_session_filename
+    from session_frames import get_latest_frame_sync, get_session_filename_sync
     from storage_utils import save_capture
 
-    frame = get_latest_frame(session_id)
+    frame = get_latest_frame_sync(session_id)
     if not frame:
         return {"captured": False, "message": "No video frame available. Ask the customer to ensure their camera is on."}
 
-    session_filename = get_session_filename(session_id) or session_id
+    session_filename = get_session_filename_sync(session_id) or session_id
     gcs_uri = save_capture(session_filename, "pan-card", frame)
     if gcs_uri:
-        return {"captured": True, "message": f"PAN card image captured and stored successfully.", "uri": gcs_uri}
+        return {"captured": True, "message": "PAN card image captured and stored successfully.", "uri": gcs_uri}
     return {"captured": False, "message": "Failed to store PAN card image."}
 
 
@@ -222,17 +223,17 @@ def capture_profile_photo(reference_number: str, session_id: str) -> dict:
     Returns:
         Status of the capture operation.
     """
-    from session_frames import get_latest_frame, get_session_filename
+    from session_frames import get_latest_frame_sync, get_session_filename_sync
     from storage_utils import save_capture
 
-    frame = get_latest_frame(session_id)
+    frame = get_latest_frame_sync(session_id)
     if not frame:
         return {"captured": False, "message": "No video frame available. Ask the customer to ensure their camera is on."}
 
-    session_filename = get_session_filename(session_id) or session_id
+    session_filename = get_session_filename_sync(session_id) or session_id
     gcs_uri = save_capture(session_filename, "profile-photo", frame)
     if gcs_uri:
-        return {"captured": True, "message": f"Profile photo captured and stored successfully.", "uri": gcs_uri}
+        return {"captured": True, "message": "Profile photo captured and stored successfully.", "uri": gcs_uri}
     return {"captured": False, "message": "Failed to store profile photo."}
 
 
@@ -248,17 +249,17 @@ def capture_signature(reference_number: str, session_id: str) -> dict:
     Returns:
         Status of the capture operation.
     """
-    from session_frames import get_latest_frame, get_session_filename
+    from session_frames import get_latest_frame_sync, get_session_filename_sync
     from storage_utils import save_capture
 
-    frame = get_latest_frame(session_id)
+    frame = get_latest_frame_sync(session_id)
     if not frame:
         return {"captured": False, "message": "No video frame available. Ask the customer to ensure their camera is on."}
 
-    session_filename = get_session_filename(session_id) or session_id
+    session_filename = get_session_filename_sync(session_id) or session_id
     gcs_uri = save_capture(session_filename, "signature", frame)
     if gcs_uri:
-        return {"captured": True, "message": f"Signature captured and stored successfully.", "uri": gcs_uri}
+        return {"captured": True, "message": "Signature captured and stored successfully.", "uri": gcs_uri}
     return {"captured": False, "message": "Failed to store signature image."}
 
 
@@ -323,7 +324,11 @@ def get_current_date() -> dict:
 # Sub-agent definition
 document_verification_agent = Agent(
     name="document_verification_agent",
-    model=os.getenv("SUB_AGENT_MODEL", "gemini-2.5-flash"),
+    model="gemini-2.5-flash",
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    ),
     instruction="""You are a document verification specialist for Cymbal Wealth.
 Your job is to verify customer identity documents during Video KYC by
 cross-checking data provided by the root agent against our internal records.

@@ -3,12 +3,16 @@
 Reduces 2 sequential LLM calls to 1 by analyzing all documents for type and duplicates together.
 """
 
-import os
 from google.adk.agents import Agent
+from google.genai import types
 
 doc_quality_agent = Agent(
     name="doc_quality_agent",
-    model=os.getenv("HOME_LOAN_MODEL", "gemini-2.5-flash"),
+    model="gemini-2.5-flash",
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    ),
     output_key="doc_quality_result",
     instruction="""## DOCUMENT QUALITY AGENT — Cymbal Wealth Home Loans
 

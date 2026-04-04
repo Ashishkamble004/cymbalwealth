@@ -3,7 +3,7 @@ uvicorn[standard]
 websockets
 python-dotenv
 google-genai
-google-adk
+google-adk>=1.27.4
 google-cloud-aiplatform
 google-cloud-storage
 pydantic
