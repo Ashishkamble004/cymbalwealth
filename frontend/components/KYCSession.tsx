@@ -164,9 +164,9 @@ export default function KYCSession({
               </div>
             )}
 
-            {/* Verification status overlay */}
+            {/* Verification status — bottom-right of video on desktop, hidden on mobile (shown below) */}
             {isConnected && (
-              <div className="absolute top-4 right-4">
+              <div className="hidden md:block absolute bottom-20 right-3 z-10">
                 <VerificationStatus messages={messages} />
               </div>
             )}
@@ -243,6 +243,13 @@ export default function KYCSession({
             </button>
           </div>
         </div>
+
+        {/* Mobile-only: Verification status strip between video and chat */}
+        {isConnected && (
+          <div className="md:hidden w-full bg-idfc-gray-900 px-3 py-2 overflow-x-auto">
+            <VerificationStatus messages={messages} compact />
+          </div>
+        )}
 
         {/* Right: Chat Panel (30%) */}
         <div className="w-full md:w-[30%] flex flex-col bg-white border-t md:border-t-0 md:border-l border-idfc-gray-200">

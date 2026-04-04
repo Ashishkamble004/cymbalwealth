@@ -3,6 +3,8 @@ import { ChatMessage, VerificationStep } from "../types";
 
 interface VerificationStatusProps {
   messages: ChatMessage[];
+  /** compact=true renders a horizontal scrollable strip for mobile */
+  compact?: boolean;
 }
 
 /**
@@ -12,6 +14,7 @@ interface VerificationStatusProps {
  */
 export default function VerificationStatus({
   messages,
+  compact = false,
 }: VerificationStatusProps) {
   const steps = useMemo<VerificationStep[]>(() => {
     const agentTexts = messages
@@ -165,6 +168,31 @@ export default function VerificationStatus({
   // Don't show if no verification activity yet
   const hasActivity = steps.some((s) => s.status !== "pending");
   if (!hasActivity) return null;
+
+  // Compact horizontal strip for mobile
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3 whitespace-nowrap">
+        {steps.map((step) => {
+          const icon =
+            step.status === "verified" ? "✓" :
+            step.status === "failed"   ? "✗" :
+            step.status === "in-progress" ? "…" : "○";
+          const colour =
+            step.status === "verified"    ? "text-green-400" :
+            step.status === "failed"      ? "text-red-400" :
+            step.status === "in-progress" ? "text-yellow-400 animate-pulse" :
+            "text-white/30";
+          return (
+            <div key={step.id} className={`flex items-center gap-1 text-xs font-medium ${colour}`}>
+              <span>{icon}</span>
+              <span>{step.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black/60 backdrop-blur-sm rounded-lg p-2 sm:p-3 min-w-[160px] sm:min-w-[220px]">
