@@ -20,6 +20,14 @@
   </style>
 </head>
 <body class="bg-cw-gray-50 text-cw-gray-900">
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+  <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 13l4 4L19 7"/>
+  </symbol>
+</svg>
   <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-4">
@@ -46,9 +54,9 @@
       </div>
       <!-- Desktop stepper: full horizontal -->
       <div class="hidden sm:flex items-center justify-between">
-        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" aria-hidden="true"><use href="#icon-check"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
-        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" aria-hidden="true"><use href="#icon-check"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">3</div><span class="text-sm font-medium text-cw-primary">Documents</span></div>
         <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
@@ -73,7 +81,7 @@
           <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'PAN Card')">
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <svg class="w-5 h-5 text-cw-gray-400" aria-hidden="true"><use href="#icon-upload"/></svg>
               </div>
               <div>
                 <p class="text-sm font-medium text-cw-gray-700">PAN Card (Image/PDF)</p>
@@ -84,7 +92,7 @@
           <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Aadhaar Card')">
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <svg class="w-5 h-5 text-cw-gray-400" aria-hidden="true"><use href="#icon-upload"/></svg>
               </div>
               <div>
                 <p class="text-sm font-medium text-cw-gray-700">Aadhaar Card (Image/PDF)</p>
@@ -95,7 +103,7 @@
         </div>
       </div>
 
-      <!-- Income Documents (TEMP: reduced to 2 salary slips for testing) -->
+      <!-- Income Documents -->
       <div class="bg-white rounded-2xl p-6 border border-cw-gray-200 shadow-sm">
         <h3 class="font-bold text-cw-gray-900 mb-1">Income Proof</h3>
         <p class="text-xs text-cw-gray-400 mb-4">Salary slips</p>
@@ -103,7 +111,7 @@
           <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Salary Slip - Jan 2026')">
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <svg class="w-5 h-5 text-cw-gray-400" aria-hidden="true"><use href="#icon-upload"/></svg>
               </div>
               <div>
                 <p class="text-sm font-medium text-cw-gray-700">Salary Slip — Jan 2026</p>
@@ -114,7 +122,7 @@
           <div class="upload-zone rounded-xl p-4 cursor-pointer" onclick="triggerFileUpload(this, 'Salary Slip - Feb 2026')">
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-cw-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-cw-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <svg class="w-5 h-5 text-cw-gray-400" aria-hidden="true"><use href="#icon-upload"/></svg>
               </div>
               <div>
                 <p class="text-sm font-medium text-cw-gray-700">Salary Slip — Feb 2026</p>
@@ -125,8 +133,6 @@
         </div>
       </div>
 
-      <!-- TEMPORARILY HIDDEN: Bank Statements, Property Documents -->
-      <!-- Revert totalDocs to 11 and uncomment these sections when ready -->
     </div>
 
     <!-- Upload counter -->
@@ -155,7 +161,7 @@
   <script>
     const API_BASE = '/api/home-loan';
     let uploadedCount = 0;
-    const totalDocs = 4; // TEMP: reduced from 11 for testing
+    const totalDocs = 4;
     const uploadedFiles = {}; // name -> { fileName, size, gcsPath }
     let applicationRef = null;
     let gcsFolder = null;
@@ -166,9 +172,6 @@
         const docKeys = [
           'pan_card', 'aadhaar_card',
           'salary_slip_jan', 'salary_slip_feb',
-          // TEMP: reduced from 11 docs. Uncomment below to restore:
-          // 'salary_slip_mar', 'form16', 'bank_statement',
-          // 'sale_agreement', 'property_tax', 'builder_noc', 'encumbrance_cert'
         ];
         const applicantData = JSON.parse(sessionStorage.getItem('homeloan_applicant') || '{}');
         const pan = applicantData.pan || 'EWIPK1035H';
@@ -195,13 +198,6 @@
       'Aadhaar Card': 'aadhaar_card',
       'Salary Slip - Jan 2026': 'salary_slip_jan',
       'Salary Slip - Feb 2026': 'salary_slip_feb',
-      'Salary Slip - Mar 2026': 'salary_slip_mar',
-      'Form 16 - FY 2025-26': 'form16',
-      'Bank Statement - 6 Months': 'bank_statement',
-      'Sale Agreement': 'sale_agreement',
-      'Property Tax Receipt': 'property_tax',
-      'Builder NOC': 'builder_noc',
-      'Encumbrance Certificate': 'encumbrance_cert',
     };
 
     function checkAndContinue() {
@@ -302,7 +298,7 @@
       el.innerHTML = `
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <svg class="w-5 h-5 text-green-600" aria-hidden="true"><use href="#icon-check"/></svg>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-cw-gray-900 truncate">${name}</p>

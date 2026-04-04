@@ -42,12 +42,9 @@ export default function KYCSession({
 
   // Auto-scroll chat to bottom on new messages
   useEffect(() => {
-    const el = document.getElementById("chat-messages");
-    if (el) {
-      requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
-      });
-    }
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView();
+    });
   }, [messages]);
 
   const handleSendText = (e: React.FormEvent) => {

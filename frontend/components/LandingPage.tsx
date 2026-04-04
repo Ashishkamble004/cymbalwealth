@@ -93,68 +93,70 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
 
           {/* Right side - Feature cards */}
           <div className="space-y-4">
-            {[
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                ),
-                title: "Investment Advisory",
-                desc: "Tailored investment strategies across equities, fixed income, and alternative assets.",
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                ),
-                title: "Estate & Trust Planning",
-                desc: "Comprehensive planning for wealth transfer and legacy preservation.",
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                ),
-                title: "Portfolio Management",
-                desc: "Active portfolio management with real-time monitoring and rebalancing.",
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ),
-                title: "Tax Optimization",
-                desc: "Strategic tax planning to maximize your after-tax returns.",
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                ),
-                title: "Investments — NSE/BSE Market Intelligence",
-                desc: "AI-powered stock market assistant. Get live quotes, index data, sector performance, and company financials for any NSE/BSE listed stock — powered by MCP + Google ADK.",
-                onClick: onStartInvestments,
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                  </svg>
-                ),
-                title: "Hyper-Personalized Marketing",
-                desc: "AI-generated 30-second video ads tailored to your profile — powered by GenFlow Ad Studio with Gemini 3.1 Pro, Veo 3.1 & Imagen 4.",
-              },
-            ].map((card, i) => (
+            {(
+              [
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  ),
+                  title: "Investment Advisory",
+                  desc: "Tailored investment strategies across equities, fixed income, and alternative assets.",
+                },
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  ),
+                  title: "Estate & Trust Planning",
+                  desc: "Comprehensive planning for wealth transfer and legacy preservation.",
+                },
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  ),
+                  title: "Portfolio Management",
+                  desc: "Active portfolio management with real-time monitoring and rebalancing.",
+                },
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
+                  title: "Tax Optimization",
+                  desc: "Strategic tax planning to maximize your after-tax returns.",
+                },
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  ),
+                  title: "Investments — NSE/BSE Market Intelligence",
+                  desc: "AI-powered stock market assistant. Get live quotes, index data, sector performance, and company financials for any NSE/BSE listed stock — powered by MCP + Google ADK.",
+                  onClick: onStartInvestments,
+                },
+                {
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    </svg>
+                  ),
+                  title: "Hyper-Personalized Marketing",
+                  desc: "AI-generated 30-second video ads tailored to your profile — powered by GenFlow Ad Studio with Gemini 3.1 Pro, Veo 3.1 & Imagen 4.",
+                },
+              ] as Array<{ icon: React.ReactNode; title: string; desc: string; onClick?: () => void }>
+            ).map((card, i) => (
               <div
                 key={i}
-                onClick={(card as any).onClick}
+                onClick={card.onClick}
                 className={`flex items-start space-x-4 p-5 bg-white rounded-xl border border-idfc-gray-200 hover:border-idfc-maroon/30 hover:shadow-md transition-all duration-200 ${
-                  (card as any).onClick ? "cursor-pointer" : ""
+                  card.onClick ? "cursor-pointer" : ""
                 }`}
               >
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-idfc-maroon/10 flex items-center justify-center text-idfc-maroon">
@@ -163,7 +165,7 @@ export default function LandingPage({ onStartKYC, onStartInvestments }: LandingP
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
                     <h3 className="font-semibold text-idfc-gray-900">{card.title}</h3>
-                    {(card as any).onClick && (
+                    {card.onClick && (
                       <span className="text-xs px-2 py-0.5 bg-idfc-maroon text-white rounded-full font-medium">Try Now</span>
                     )}
                   </div>

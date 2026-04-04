@@ -8,7 +8,6 @@ to answer natural language stock queries directly.
 import os
 import asyncio
 import logging
-from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -55,90 +54,13 @@ async def sse_endpoint(request: Request):
         )
 
 
-# ── Gemini function declarations (mirrors MCP TOOLS) ─────────────────────────
+# ── Gemini function declarations (derived from MCP TOOLS to avoid drift) ──────
+# Each MCP Tool's inputSchema is structurally identical to a Gemini
+# FunctionDeclaration's parameters field, so we map directly.
 
 GEMINI_TOOLS = [
-    {
-        "name": "get_stock_quote",
-        "description": "Get real-time quote for an NSE/BSE listed stock. Returns price, change, volume, market cap, P/E ratio, 52-week range.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "symbol": {"type": "string", "description": "NSE stock symbol e.g. RELIANCE, TCS, INFY, HDFCBANK"},
-                "exchange": {"type": "string", "enum": ["NSE", "BSE"], "description": "Exchange (default: NSE)"}
-            },
-            "required": ["symbol"]
-        }
-    },
-    {
-        "name": "get_index_data",
-        "description": "Get current value and change for major Indian indices: NIFTY50, SENSEX, NIFTYBANK, NIFTYIT, NIFTYMIDCAP.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "index": {"type": "string", "enum": ["NIFTY50", "SENSEX", "NIFTYBANK", "NIFTYIT", "NIFTYMIDCAP"]}
-            },
-            "required": ["index"]
-        }
-    },
-    {
-        "name": "get_historical_data",
-        "description": "Get historical OHLCV data for a stock. Useful for trend analysis.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "symbol": {"type": "string"},
-                "period": {"type": "string", "enum": ["1w", "1mo", "3mo", "6mo", "1y", "2y", "5y"]},
-                "exchange": {"type": "string", "enum": ["NSE", "BSE"]}
-            },
-            "required": ["symbol"]
-        }
-    },
-    {
-        "name": "compare_stocks",
-        "description": "Compare multiple NSE/BSE stocks side-by-side on price, market cap, P/E, dividend yield, 52-week performance.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "symbols": {"type": "array", "items": {"type": "string"}, "description": "List of NSE symbols e.g. ['TCS','INFY','WIPRO']"}
-            },
-            "required": ["symbols"]
-        }
-    },
-    {
-        "name": "get_top_movers",
-        "description": "Get top gainers and losers from Nifty 50 for today.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "type": {"type": "string", "enum": ["gainers", "losers", "both"]},
-                "top_n": {"type": "integer"}
-            }
-        }
-    },
-    {
-        "name": "get_sector_performance",
-        "description": "Get performance of Indian market sectors: IT, Banking, Pharma, Auto, FMCG, Energy, Metals.",
-        "parameters": {"type": "object", "properties": {}}
-    },
-    {
-        "name": "get_company_info",
-        "description": "Get detailed company information: business summary, sector, industry, employees, headquarters.",
-        "parameters": {
-            "type": "object",
-            "properties": {"symbol": {"type": "string"}},
-            "required": ["symbol"]
-        }
-    },
-    {
-        "name": "get_financials",
-        "description": "Get key financial metrics: revenue, profit, EPS, ROE, debt-to-equity, cash flow.",
-        "parameters": {
-            "type": "object",
-            "properties": {"symbol": {"type": "string"}},
-            "required": ["symbol"]
-        }
-    },
+    {"name": t.name, "description": t.description, "parameters": t.inputSchema}
+    for t in TOOLS
 ]
 
 SYSTEM_PROMPT = """You are an expert Indian stock market analyst assistant for Cymbal Wealth.
@@ -192,7 +114,11 @@ def _run_gemini_chat(query: str) -> str:
     # Multi-turn function calling loop
     messages = [types.Content(role="user", parts=[types.Part(text=query)])]
 
-    for _ in range(5):  # max 5 tool calls per query
+    # Loop up to 5 times: each iteration sends messages to Gemini, appends the
+    # model's reply, then executes any requested tool calls and feeds results
+    # back as a user turn. Breaks early when the model returns a text-only
+    # response (no function_call parts), meaning it has finished tool use.
+    for _ in range(5):
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=messages,
@@ -202,9 +128,8 @@ def _run_gemini_chat(query: str) -> str:
         candidate = response.candidates[0]
         messages.append(candidate.content)  # add model turn
 
-        # Check for function calls
         function_calls = [p for p in candidate.content.parts if p.function_call]
-        if not function_calls:
+        if not function_calls:  # no tool calls → model produced final answer
             break
 
         # Execute all function calls and collect responses
@@ -238,7 +163,6 @@ async def health():
 
 @http_app.get("/tools")
 async def list_tools_endpoint():
-    from server import TOOLS
     return {
         "tools": [
             {"name": t.name, "description": t.description, "parameters": t.inputSchema}

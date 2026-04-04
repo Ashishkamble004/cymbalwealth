@@ -25,15 +25,9 @@ export default function VerificationStatus({
       failedKeywords: string[],
       inProgressKeywords: string[]
     ): VerificationStep["status"] => {
-      for (const kw of verifiedKeywords) {
-        if (allText.includes(kw)) return "verified";
-      }
-      for (const kw of failedKeywords) {
-        if (allText.includes(kw)) return "failed";
-      }
-      for (const kw of inProgressKeywords) {
-        if (allText.includes(kw)) return "in-progress";
-      }
+      if (verifiedKeywords.some((kw) => allText.includes(kw))) return "verified";
+      if (failedKeywords.some((kw) => allText.includes(kw))) return "failed";
+      if (inProgressKeywords.some((kw) => allText.includes(kw))) return "in-progress";
       return "pending";
     };
 

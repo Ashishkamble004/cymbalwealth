@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Structured audit log to Cloud Logging -->
 <MessageLogging name="ML-AuditLog">
   <CloudLogging>
     <LogName>projects/general-ak/logs/cymbal-llm-audit</LogName>

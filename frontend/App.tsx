@@ -44,7 +44,7 @@ export default function App() {
         />
       )}
       {view === "investments" && (
-        <InvestmentsPage onBack={() => setView("landing")} />
+        <InvestmentsPage onBack={handleEndSession} />
       )}
     </div>
   );

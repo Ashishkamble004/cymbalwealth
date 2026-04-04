@@ -15,7 +15,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(false);
 
     const ref = refNumber.trim().toUpperCase();
     if (!ref) {

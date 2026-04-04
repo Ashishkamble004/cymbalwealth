@@ -38,7 +38,7 @@ def crore(val: Any) -> str:
 
 def fmt_int(val: Any) -> str:
     """Format an integer value with commas; returns N/A for None/non-numeric."""
-    if isinstance(val, (int, float)) and val is not None:
+    if isinstance(val, (int, float)):
         return f"{int(val):,}"
     return "N/A"
 
@@ -321,7 +321,7 @@ def handle_get_top_movers(type_: str = "both", top_n: int = 5) -> str:
             if len(hist) >= 2:
                 chg = ((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100
                 results.append((sym, hist["Close"].iloc[-1], chg))
-        except:
+        except Exception:
             pass
 
     results.sort(key=lambda x: x[2], reverse=True)
@@ -353,7 +353,7 @@ def handle_get_sector_performance() -> str:
                 rows.append(f"  {bar} {sector:<10} {'+' if chg>=0 else ''}{fmt(chg)}%  ({fmt(hist['Close'].iloc[-1], 0)} pts)")
             else:
                 rows.append(f"  ⚪ {sector:<10} N/A")
-        except:
+        except Exception:
             rows.append(f"  ⚪ {sector:<10} Error")
     return "\n".join(rows)
 
@@ -386,7 +386,7 @@ def handle_get_financials(symbol: str) -> str:
         inc = ticker.financials
         rev = inc.loc["Total Revenue"].iloc[0] if "Total Revenue" in inc.index else None
         ni  = inc.loc["Net Income"].iloc[0]    if "Net Income"    in inc.index else None
-    except:
+    except Exception:
         rev, ni = None, None
 
     return f"""

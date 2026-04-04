@@ -25,6 +25,23 @@
 </style>
 </head>
 <body class="bg-cw-gray-50 text-cw-gray-900">
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+  <symbol id="icon-check-circle" viewBox="0 0 20 20" fill="currentColor">
+    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="icon-x-circle" viewBox="0 0 20 20" fill="currentColor">
+    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="icon-exclamation" viewBox="0 0 20 20" fill="currentColor">
+    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="icon-check-circle-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 13l4 4L19 7"/>
+  </symbol>
+</svg>
   <!-- Nav -->
   <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -52,11 +69,11 @@
       </div>
       <!-- Desktop stepper: full horizontal -->
       <div class="hidden sm:flex items-center justify-between">
-        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" aria-hidden="true"><use href="#icon-check"/></svg></div><span class="text-sm font-medium text-cw-green">Eligibility</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
-        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" aria-hidden="true"><use href="#icon-check"/></svg></div><span class="text-sm font-medium text-cw-green">Property</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
-        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span class="text-sm font-medium text-cw-green">Documents</span></div>
+        <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold"><svg class="w-4 h-4" aria-hidden="true"><use href="#icon-check"/></svg></div><span class="text-sm font-medium text-cw-green">Documents</span></div>
         <div class="flex-1 h-0.5 bg-cw-green mx-4"></div>
         <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">4</div><span class="text-sm font-medium text-cw-primary">AI Verification</span></div>
         <div class="flex-1 h-0.5 bg-cw-gray-200 mx-4"></div>
@@ -228,14 +245,12 @@ function showResult(id, html) {
 
 function resultRow(label, value, status = 'pass') {
   const icons = {
-    pass: '<svg class="w-4 h-4 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
-    fail: '<svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
-    warn: '<svg class="w-4 h-4 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+    pass: '<svg class="w-4 h-4 text-green-500 shrink-0" aria-hidden="true"><use href="#icon-check-circle"/></svg>',
+    fail: '<svg class="w-4 h-4 text-red-500 shrink-0" aria-hidden="true"><use href="#icon-x-circle"/></svg>',
+    warn: '<svg class="w-4 h-4 text-yellow-500 shrink-0" aria-hidden="true"><use href="#icon-exclamation"/></svg>',
   };
   return `<div class="flex items-center space-x-2 py-1.5 text-xs border-b border-cw-gray-100 last:border-0">${icons[status]}<span class="text-cw-gray-500 w-32 shrink-0">${label}</span><span class="font-medium text-cw-gray-800">${value}</span></div>`;
 }
-
-
 
 async function startVerification() {
   const API_BASE = '/api/home-loan';
@@ -510,18 +525,14 @@ function showApprovalBanner() {
   overlay.innerHTML = `
     <div class="bg-white rounded-3xl shadow-2xl max-w-lg mx-4 overflow-hidden" style="animation: slideUp 0.4s ease-out">
       <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6 text-center text-white">
-        <svg class="w-16 h-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
+        <svg class="w-16 h-16 mx-auto mb-3" aria-hidden="true"><use href="#icon-check-circle-lg"/></svg>
         <h2 class="text-2xl font-extrabold">Application Submitted!</h2>
         <p class="text-white/80 text-sm mt-1">Loan Ref: ${window._loanRef || 'HL-CW-' + Date.now()}</p>
       </div>
       <div class="px-4 sm:px-8 py-4 sm:py-6">
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
           <div class="flex items-start space-x-3">
-            <svg class="w-6 h-6 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-            </svg>
+            <svg class="w-6 h-6 text-amber-500 shrink-0 mt-0.5" aria-hidden="true"><use href="#icon-exclamation"/></svg>
             <div>
               <p class="font-bold text-amber-800 text-sm">Sent for Human Review</p>
               <p class="text-xs text-amber-700 mt-1">Your application has been forwarded to our credit team for final review and amount disbursal approval. You will be notified within 24-48 hours.</p>
@@ -555,7 +566,7 @@ function showApprovalBanner() {
           </div>
         </div>
         <div class="space-y-3">
-          <a href="dashboard.html" class="block w-full text-center px-6 py-3 bg-[#791652] hover:bg-[#5a1040] text-white font-semibold rounded-xl transition-all">
+          <a href="dashboard.html" class="block w-full text-center px-6 py-3 bg-cw-primary hover:bg-cw-primary-dark text-white font-semibold rounded-xl transition-all">
             Go to Dashboard
           </a>
           <a href="index.html" class="block w-full text-center px-6 py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all">

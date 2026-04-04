@@ -107,16 +107,17 @@ Try one of the suggested queries below or type your own question.`,
     [isLoading]
   );
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input);
     }
-  };
+  }, [input, sendMessage]);
 
   const formatText = (text: string) => {
     // Basic markdown-like formatting for bold and newlines
-    return text.split("\n").map((line, i) => {
+    const lines = text.split("\n");
+    return lines.map((line, i) => {
       const parts = line.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return <strong key={j}>{part.slice(2, -2)}</strong>;
@@ -126,7 +127,7 @@ Try one of the suggested queries below or type your own question.`,
       return (
         <span key={i}>
           {parts}
-          {i < text.split("\n").length - 1 && <br />}
+          {i < lines.length - 1 && <br />}
         </span>
       );
     });
@@ -307,14 +308,14 @@ Try one of the suggested queries below or type your own question.`,
             </h3>
             <div className="space-y-2">
               {[
-                { tool: "get_stock_quote", label: "Stock Quote", desc: "Live price, P/E, 52W range" },
-                { tool: "get_index_data", label: "Index Data", desc: "Nifty 50, Sensex, Bank Nifty" },
-                { tool: "get_historical_data", label: "Historical Data", desc: "OHLCV up to 5 years" },
-                { tool: "compare_stocks", label: "Compare Stocks", desc: "Side-by-side 2–5 stocks" },
-                { tool: "get_top_movers", label: "Top Movers", desc: "Nifty 50 gainers & losers" },
-                { tool: "get_sector_performance", label: "Sector Performance", desc: "IT, Banking, Pharma..." },
-                { tool: "get_company_info", label: "Company Info", desc: "Business, sector, HQ" },
-                { tool: "get_financials", label: "Financials", desc: "Revenue, ROE, debt/equity" },
+                { label: "Stock Quote", desc: "Live price, P/E, 52W range" },
+                { label: "Index Data", desc: "Nifty 50, Sensex, Bank Nifty" },
+                { label: "Historical Data", desc: "OHLCV up to 5 years" },
+                { label: "Compare Stocks", desc: "Side-by-side 2–5 stocks" },
+                { label: "Top Movers", desc: "Nifty 50 gainers & losers" },
+                { label: "Sector Performance", desc: "IT, Banking, Pharma..." },
+                { label: "Company Info", desc: "Business, sector, HQ" },
+                { label: "Financials", desc: "Revenue, ROE, debt/equity" },
               ].map(({ label, desc }) => (
                 <div key={label} className="flex items-start space-x-2.5 py-1">
                   <div className="w-5 h-5 rounded-full bg-idfc-maroon/10 flex items-center justify-center flex-shrink-0 mt-0.5">
