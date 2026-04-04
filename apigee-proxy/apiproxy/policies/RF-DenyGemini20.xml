@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Hard block: reject any request containing gemini-2.0 in the URL path or body -->
+<RaiseFault name="RF-DenyGemini20">
+  <Condition>(proxy.pathsuffix ~~ ".*gemini-2\.0.*") or (request.content ~~ ".*gemini-2\.0.*")</Condition>
+  <FaultResponse>
+    <Set>
+      <StatusCode>400</StatusCode>
+      <ReasonPhrase>Model Not Permitted</ReasonPhrase>
+      <Payload contentType="application/json">{"error": "gemini-2.0 models are not permitted in Cymbal Wealth. Use gemini-2.5-flash (primary) or gemini-3-flash-preview/global (fallback)."}</Payload>
+    </Set>
+  </FaultResponse>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</RaiseFault>

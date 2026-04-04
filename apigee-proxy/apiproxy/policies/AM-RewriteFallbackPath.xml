@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Rewrite target URL to gemini-3-flash-preview in global region for fallback.
+     gemini-3-flash-preview is ONLY available via the global endpoint.
+     Hardcoded URL is correct — no JS needed. -->
+<AssignMessage name="AM-RewriteFallbackPath">
+  <AssignVariable>
+    <Name>target.url</Name>
+    <Value>https://aiplatform.googleapis.com/v1/projects/general-ak/locations/global/publishers/google/models/gemini-3-flash-preview:generateContent</Value>
+  </AssignVariable>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</AssignMessage>

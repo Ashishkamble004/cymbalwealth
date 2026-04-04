@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Structured audit log to Cloud Logging -->
+<MessageLogging name="ML-AuditLog">
+  <CloudLogging>
+    <LogName>projects/general-ak/logs/cymbal-llm-audit</LogName>
+    <Message contentType="application/json">{
+  "cymbal_app": "{request.header.x-cymbal-app}",
+  "target": "{target.name}",
+  "model_primary": "gemini-2.5-flash",
+  "model_fallback": "gemini-3-flash-preview",
+  "fallback_triggered": "{fallback_triggered}",
+  "prompt_tokens": {prompt_tokens},
+  "completion_tokens": {completion_tokens},
+  "total_tokens": {total_tokens},
+  "thoughts_tokens": {thoughts_tokens},
+  "latency_ms": {target.elapsed.time},
+  "http_status": {response.status.code},
+  "timestamp": "{system.timestamp}",
+  "request_id": "{messageid}"
+}</Message>
+    <ResourceType>apigee.googleapis.com/Proxy</ResourceType>
+  </CloudLogging>
+  <logLevel>INFO</logLevel>
+</MessageLogging>

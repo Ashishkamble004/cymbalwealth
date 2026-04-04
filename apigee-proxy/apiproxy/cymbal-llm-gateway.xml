@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<APIProxy name="cymbal-llm-gateway" revision="1">
+  <Description>Cymbal Wealth LLM Gateway — routes to gemini-2.5-flash (primary) or gemini-3-flash-preview/global (fallback). Never routes to gemini-2.0.</Description>
+  <DisplayName>Cymbal LLM Gateway</DisplayName>
+  <BasePaths>/llm</BasePaths>
+</APIProxy>
