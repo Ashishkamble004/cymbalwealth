@@ -141,7 +141,7 @@
 
 ## What's Left to Complete
 
-### 1. Load Balancer + DNS (REQUIRED before agents can connect)
+### 1. Load Balancer + DNS — COMPLETED ✅
 
 The Apigee runtime instance is at internal VPC IP `10.100.0.2`. Cloud Run services and Agent Engine cannot reach it directly. A Google Cloud Load Balancer is needed to expose it:
 
