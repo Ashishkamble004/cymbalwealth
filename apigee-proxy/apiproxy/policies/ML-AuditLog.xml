@@ -2,7 +2,7 @@
 <MessageLogging name="ML-AuditLog">
   <CloudLogging>
     <LogName>projects/general-ak/logs/cymbal-llm-audit</LogName>
-    <Message contentType="text/plain">app={request.header.x-cymbal-app} target={target.name} total_tokens={total_tokens} prompt_tokens={prompt_tokens} completion_tokens={completion_tokens} latency_ms={target.elapsed.time} status={response.status.code} ts={system.timestamp} id={messageid}</Message>
+    <Message contentType="text/plain">cymbal_app={request.header.x-cymbal-app} target={target.name} model={model_version} finish={finish_reason} prompt_tokens={prompt_tokens} completion_tokens={completion_tokens} thoughts_tokens={thoughts_tokens} total_tokens={total_tokens} latency_ms={target.elapsed.time} status={response.status.code} path={request.path} id={messageid}</Message>
   </CloudLogging>
   <logLevel>INFO</logLevel>
 </MessageLogging>

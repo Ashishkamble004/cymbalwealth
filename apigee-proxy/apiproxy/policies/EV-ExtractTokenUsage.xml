@@ -11,6 +11,15 @@
     <Variable name="total_tokens" type="string">
       <JSONPath>$.usageMetadata.totalTokenCount</JSONPath>
     </Variable>
+    <Variable name="thoughts_tokens" type="string">
+      <JSONPath>$.usageMetadata.thoughtsTokenCount</JSONPath>
+    </Variable>
+    <Variable name="model_version" type="string">
+      <JSONPath>$.modelVersion</JSONPath>
+    </Variable>
+    <Variable name="finish_reason" type="string">
+      <JSONPath>$.candidates[0].finishReason</JSONPath>
+    </Variable>
   </JSONPayload>
   <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
 </ExtractVariables>
