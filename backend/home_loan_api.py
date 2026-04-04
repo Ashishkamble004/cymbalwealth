@@ -23,6 +23,38 @@ from vertexai import agent_engines
 
 logger = logging.getLogger(__name__)
 
+try:
+    import google.cloud.logging as gcloud_logging
+    _gcloud_log_client = gcloud_logging.Client()
+    _hl_logger = _gcloud_log_client.logger("cymbal-homeloan-verification")
+except Exception:
+    _hl_logger = None
+
+
+def _log_loan_verification(application_ref: str, applicant_name: str,
+                           applicant_pan: str, total_tokens: int,
+                           duration_seconds: float, results: list,
+                           documents_processed: int) -> None:
+    """Write structured home loan verification result to Cloud Logging → BigQuery."""
+    if not _hl_logger:
+        return
+    full_text = " ".join(r.get("text", "") for r in results).lower()
+    has_fail  = any(k in full_text for k in ["fail", "reject", "duplicate", "mismatch"])
+    status    = "issues_found" if has_fail else "approved"
+    try:
+        _hl_logger.log_struct({
+            "application_ref":      application_ref,
+            "applicant_name":       applicant_name,
+            "applicant_pan":        applicant_pan,
+            "agent_engine_id":      AGENT_ENGINE_ID,
+            "documents_processed":  documents_processed,
+            "verification_status":  status,
+            "total_tokens":         total_tokens,
+            "duration_seconds":     round(duration_seconds, 1),
+        }, severity="INFO")
+    except Exception as exc:
+        logger.warning(f"[HomeLoan] Failed to write verification log: {exc}")
+
 router = APIRouter(prefix="/api/home-loan", tags=["home-loan"])
 
 GCS_BUCKET = os.getenv("GCS_BUCKET", "cymbal-wealth")
@@ -390,6 +422,18 @@ async def verify_documents(request: VerifyRequest):
         t.join(timeout=10)
 
         # Save verification report to GCS
+        # Log verification summary to Cloud Logging → BigQuery
+        total_tok = sum(int(r.get("total_tokens", 0)) for r in results if isinstance(r, dict) and "total_tokens" in r)
+        _log_loan_verification(
+            application_ref=request.application_ref,
+            applicant_name=request.applicant_name,
+            applicant_pan=request.applicant_pan,
+            total_tokens=total_tok,
+            duration_seconds=0,  # timing not tracked here; use Cloud Trace for that
+            results=results,
+            documents_processed=len(documents),
+        )
+
         try:
             report_blob = bucket.blob(f"home-loan/{request.application_ref}/verification_report.json")
             report_blob.upload_from_string(

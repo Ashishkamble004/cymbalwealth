@@ -178,6 +178,33 @@ Not yet configured. Requires:
 - A template created with prompt injection / jailbreak / sensitive data filters
 - `ModelArmor` policy added to the proxy PreFlow
 
+### 3. BigQuery + Looker Studio — COMPLETED ✅
+
+**Dataset:** `general-ak.cymbal_ai_observability`
+
+**Tables (auto-populated via Cloud Logging sinks):**
+- `llm_calls` ← `cymbal-llm-audit` log (Apigee audit — every LLM call, token counts, latency)
+- `kyc_sessions` ← `cymbal-kyc-sessions` log (KYC backend — per session outcome, audio duration)
+- `loan_applications` ← `cymbal-homeloan-verification` log (home loan — per application outcome)
+
+**Views (pre-built SQL for Looker Studio):**
+- `workflow_cost_summary` — unified daily cost across all modules
+- `kyc_cost_per_session` — per-session Gemini Live + verification token cost
+- `investment_chat_cost` — per-query token cost and latency for Investments chatbot
+
+**Key metrics available in Looker Studio:**
+| Metric | Source view |
+|---|---|
+| Cost per completed KYC session | `kyc_cost_per_session` |
+| Cost per home loan verification | `workflow_cost_summary` |
+| Cost per investment chat query | `investment_chat_cost` |
+| Daily token burn by module (`cymbal_app`) | `workflow_cost_summary` |
+| KYC completion rate % | `workflow_cost_summary` |
+| Avg verification latency | `workflow_cost_summary` |
+| Error rate by service | `workflow_cost_summary` |
+
+**To open Looker Studio:** Go to `lookerstudio.google.com` → Create → Report → BigQuery → dataset `cymbal_ai_observability`
+
 ### 4. Semantic Caching
 
 Not yet configured. Requires:

@@ -58,6 +58,50 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 APP_NAME = "cymbal-wealth-kyc-app"
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "general-ak")
+
+try:
+    import google.cloud.logging as gcloud_logging
+    _gcloud_log_client = gcloud_logging.Client(project=PROJECT_ID)
+    _kyc_logger = _gcloud_log_client.logger("cymbal-kyc-sessions")
+except Exception:
+    _kyc_logger = None
+
+
+def _log_kyc_session(reference_number: str, session_id: str,
+                     duration_seconds: float, transcript: list,
+                     audio_bytes_in: int, audio_bytes_out: int,
+                     completion_status: str) -> None:
+    """Write a structured KYC session summary to Cloud Logging → BigQuery."""
+    if not _kyc_logger:
+        return
+    text = " ".join(m.get("text", "").lower() for m in transcript if m.get("role") == "agent")
+    pan_ok   = any(k in text for k in ["pan verified", "pan verify ho gaya", "pan ho gaya"])
+    aadhar_ok = any(k in text for k in ["aadhaar verified", "aadhaar verify", "aadhar verified"])
+    face_ok  = any(k in text for k in ["face verified", "face verification ho gayi", "face match"])
+    sig_ok   = any(k in text for k in ["signature capture", "signature ho gayi", "signature captured"])
+    kyc_done = any(k in text for k in ["kyc completed", "kyc successfully complete", "congratulations"])
+    lang     = "english"
+    if any(k in text for k in ["namaste", "aapka", "aapke", "bilkul", "bahut"]):
+        lang = "hindi"
+    audio_secs = (audio_bytes_in + audio_bytes_out) / (16000 * 2)  # 16-bit PCM approx
+    try:
+        _kyc_logger.log_struct({
+            "reference_number": reference_number,
+            "session_id":        session_id,
+            "session_duration_seconds": round(duration_seconds, 1),
+            "audio_duration_seconds":   round(audio_secs, 1),
+            "model":             "gemini-live-2.5-flash-native-audio",
+            "language_detected": lang,
+            "pan_verified":      pan_ok,
+            "aadhaar_verified":  aadhar_ok,
+            "face_verified":     face_ok,
+            "signature_verified": sig_ok,
+            "kyc_complete":      kyc_done,
+            "completion_status": completion_status,
+        }, severity="INFO")
+    except Exception as exc:
+        logger.warning(f"[KYC] Failed to write session log: {exc}")
 
 app = FastAPI(title="Cymbal Wealth Video KYC", version="1.0.0")
 
@@ -93,6 +137,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
     live_request_queue = LiveRequestQueue()
     transcript: list[dict] = []
     reference_number = None
+    session_start = datetime.now(timezone.utc)
 
     # Buffers for recording
     input_audio_chunks: list[bytes] = []   # User audio (16kHz PCM)
@@ -352,6 +397,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     save_video_recording(session_fname, video_frames, fps=1.0)
                 except Exception as e:
                     logger.error(f"[WS] Failed to save video recording: {e}")
+
+        # Log session summary to Cloud Logging → BigQuery
+        duration = (datetime.now(timezone.utc) - session_start).total_seconds()
+        audio_in  = sum(len(c) for c in input_audio_chunks)
+        audio_out = sum(len(c) for c in output_audio_chunks)
+        status    = "success" if reference_number else "abandoned"
+        if reference_number:
+            _log_kyc_session(reference_number, session_id, duration, transcript,
+                             audio_in, audio_out, status)
 
         # Clean up shared state
         await clear_session(session_id)

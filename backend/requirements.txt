@@ -6,6 +6,7 @@ google-genai
 google-adk>=1.27.4
 google-cloud-aiplatform
 google-cloud-storage
+google-cloud-logging
 pydantic
 opencv-python-headless
 numpy
