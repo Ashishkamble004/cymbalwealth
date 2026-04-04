@@ -21,7 +21,7 @@ const SUGGESTED_QUERIES = [
 const INVESTMENTS_API_URL =
   (window as any).INVESTMENTS_API_URL ||
   import.meta.env?.VITE_INVESTMENTS_API_URL ||
-  "http://localhost:8080";
+  "https://nse-bse-mcp-server-mcj3w7ujpq-uc.a.run.app";
 
 interface InvestmentsPageProps {
   onBack: () => void;

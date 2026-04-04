@@ -70,7 +70,7 @@
       </div>
       <div>
         <h1 class="text-xl font-bold text-cw-gray-900">NSE/BSE Market Intelligence</h1>
-        <p class="text-sm text-cw-gray-500 mt-0.5">AI-powered stock market assistant — live data via MCP + Google ADK · Gemini 2.0 Flash</p>
+        <p class="text-sm text-cw-gray-500 mt-0.5">AI-powered stock market assistant — live data via MCP + Google ADK · Gemini 2.5 Flash</p>
       </div>
     </div>
     <div class="hidden md:flex items-center space-x-2 text-xs text-cw-gray-500">
@@ -216,7 +216,7 @@
       <div class="space-y-2 text-xs text-cw-gray-600">
         <div class="flex items-center space-x-2">
           <div class="w-2 h-2 rounded-full bg-cw-primary flex-shrink-0"></div>
-          <span><strong>ADK Agent</strong> → Gemini 2.0 Flash</span>
+          <span><strong>ADK Agent</strong> → Gemini 2.5 Flash</span>
         </div>
         <div class="flex items-center space-x-2 ml-2">
           <div class="w-1 h-4 border-l-2 border-dashed border-cw-gray-300"></div>
@@ -252,7 +252,7 @@
 
 <script>
   // Config — override window.INVESTMENTS_API_URL before this script, or set it here
-  const API_URL = window.INVESTMENTS_API_URL || 'http://localhost:8080';
+  const API_URL = window.INVESTMENTS_API_URL || 'https://nse-bse-mcp-server-mcj3w7ujpq-uc.a.run.app';
   let isLoading = false;
 
   // Set welcome time
