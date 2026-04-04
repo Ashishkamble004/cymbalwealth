@@ -4,9 +4,7 @@
     <BasePath>/llm</BasePath>
   </HTTPProxyConnection>
   <PreFlow name="PreFlow">
-    <Request>
-      <Step><Name>RF-DenyGemini20</Name></Step>
-    </Request>
+    <Request/>
     <Response/>
   </PreFlow>
   <PostFlow name="PostFlow">
