@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<TargetEndpoint name="vertex-us-central1">
-  <Description>Primary: gemini-2.5-flash in us-central1</Description>
-  <HTTPTargetConnection>
-    <URL>https://us-central1-aiplatform.googleapis.com</URL>
-  </HTTPTargetConnection>
-</TargetEndpoint>

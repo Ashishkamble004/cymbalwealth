@@ -4,4 +4,3 @@ uvicorn[standard]>=0.29
 yfinance>=0.2.61
 pandas>=2.0
 google-genai>=1.0
-google-adk>=1.28.0

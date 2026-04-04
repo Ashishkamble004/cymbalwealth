@@ -1,15 +1,15 @@
+import os
 """Identity & Income Verification Agent — Combined identity + income check in one pass.
 
 Reduces 2 sequential LLM calls to 1 by verifying PAN, Aadhaar, and salary documents together.
 """
 
 from google.adk.agents import Agent
-from home_loan_agents.model import get_model
 from google.genai import types
 
 identity_income_agent = Agent(
     name="identity_income_agent",
-    model=get_model("home-loan-identity"),
+    model=os.environ.get("HOME_LOAN_MODEL","gemini-2.5-flash"),
     generate_content_config=types.GenerateContentConfig(
         temperature=0,
         thinking_config=types.ThinkingConfig(thinking_budget=0),

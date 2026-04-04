@@ -4,8 +4,6 @@
     "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true",
     "GOOGLE_GENAI_USE_VERTEXAI": "1",
     "GCS_BUCKET": "cymbal-wealth",
-    "HOME_LOAN_MODEL": "gemini-2.5-flash",
-    "APIGEE_PROXY_URL": "https://ai-gateway.cymbalwealth.ak-demos.com/llm"
-  },
-  "_note": "APIGEE_PROXY_URL activates Apigee AI Gateway routing. Remove or unset to fall back to direct Vertex AI. Gateway requires LB + DNS setup before it can be reached from Agent Engine."
+    "HOME_LOAN_MODEL": "gemini-2.5-flash"
+  }
 }
