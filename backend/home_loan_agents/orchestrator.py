@@ -7,7 +7,6 @@ Uses ParallelAgent + SequentialAgent for maximum throughput:
 Reduced from 7 LLM calls to 4 (1 orchestrator overhead + 3 sub-agents).
 """
 
-import os
 from google.adk.agents import Agent, SequentialAgent, ParallelAgent
 
 from .sub_agents.doc_quality_agent import doc_quality_agent

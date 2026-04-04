@@ -4,11 +4,12 @@ Reduces 2 sequential LLM calls to 1.
 """
 
 from google.adk.agents import Agent
+from home_loan_agents.model import get_model
 from google.genai import types
 
 property_eligibility_agent = Agent(
     name="property_eligibility_agent",
-    model="gemini-2.5-flash",
+    model=get_model("home-loan-eligibility"),
     generate_content_config=types.GenerateContentConfig(
         temperature=0,
         thinking_config=types.ThinkingConfig(thinking_budget=0),
