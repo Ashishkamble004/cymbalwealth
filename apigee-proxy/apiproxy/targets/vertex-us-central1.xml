@@ -1,23 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TargetEndpoint name="vertex-us-central1">
   <Description>Primary: gemini-2.5-flash in us-central1</Description>
-
   <HTTPTargetConnection>
-    <!-- Apigee rewrites path to Vertex AI generateContent endpoint.
-         The ADK ApigeeLlm sends requests with model in the path:
-         /llm/v1/projects/PROJECT/locations/LOCATION/publishers/google/models/MODEL:generateContent
-         We strip /llm prefix and forward to Vertex AI. -->
     <URL>https://us-central1-aiplatform.googleapis.com</URL>
-    <Properties>
-      <Property name="request.retain.headers">Authorization,Content-Type,x-cymbal-app</Property>
-    </Properties>
   </HTTPTargetConnection>
-
-  <!-- Retry on transient errors before triggering circuit breaker -->
-  <RetryOptions>
-    <Enabled>true</Enabled>
-    <RetryCount>2</RetryCount>
-    <RetryInterval>1000</RetryInterval>
-    <RetryCondition>response.status.code = 500 or response.status.code = 502 or response.status.code = 504</RetryCondition>
-  </RetryOptions>
 </TargetEndpoint>

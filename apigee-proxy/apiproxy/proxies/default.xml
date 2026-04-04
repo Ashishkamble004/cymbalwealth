@@ -1,42 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ProxyEndpoint name="default">
-  <Description>Receives LLM requests from ADK agents</Description>
-
   <HTTPProxyConnection>
     <BasePath>/llm</BasePath>
   </HTTPProxyConnection>
-
-  <FaultRules>
-    <!-- Circuit breaker: on 429 or 503 from primary, route to gemini-3-flash-preview global -->
-    <FaultRule name="QuotaExhaustedFallback">
-      <Condition>response.status.code = 429 or response.status.code = 503</Condition>
-      <Step><Name>AM-SetFallbackFlag</Name></Step>
-      <Step><Name>RF-RouteToFallback</Name></Step>
-    </FaultRule>
-  </FaultRules>
-
   <PreFlow name="PreFlow">
     <Request>
-      <!-- 1. Block any gemini-2.0 model requests hard -->
       <Step><Name>RF-DenyGemini20</Name></Step>
-      <!-- 2. Tag request with gateway headers -->
-      <Step><Name>AM-InjectServiceAccountToken</Name></Step>
     </Request>
     <Response/>
   </PreFlow>
-
   <PostFlow name="PostFlow">
     <Request/>
     <Response>
-      <!-- Extract token usage from Vertex AI response -->
       <Step><Name>EV-ExtractTokenUsage</Name></Step>
-      <!-- Record analytics variables for Apigee dashboards -->
-      <Step><Name>SC-RecordAnalytics</Name></Step>
-      <!-- Structured audit log to Cloud Logging -->
       <Step><Name>ML-AuditLog</Name></Step>
     </Response>
   </PostFlow>
-
   <RouteRule name="default">
     <TargetEndpoint>vertex-us-central1</TargetEndpoint>
   </RouteRule>

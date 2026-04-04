@@ -2,22 +2,7 @@
 <MessageLogging name="ML-AuditLog">
   <CloudLogging>
     <LogName>projects/general-ak/logs/cymbal-llm-audit</LogName>
-    <Message contentType="application/json">{
-  "cymbal_app": "{request.header.x-cymbal-app}",
-  "target": "{target.name}",
-  "model_primary": "gemini-2.5-flash",
-  "model_fallback": "gemini-3-flash-preview",
-  "fallback_triggered": "{fallback_triggered}",
-  "prompt_tokens": {prompt_tokens},
-  "completion_tokens": {completion_tokens},
-  "total_tokens": {total_tokens},
-  "thoughts_tokens": {thoughts_tokens},
-  "latency_ms": {target.elapsed.time},
-  "http_status": {response.status.code},
-  "timestamp": "{system.timestamp}",
-  "request_id": "{messageid}"
-}</Message>
-    <ResourceType>apigee.googleapis.com/Proxy</ResourceType>
+    <Message contentType="text/plain">app={request.header.x-cymbal-app} target={target.name} total_tokens={total_tokens} prompt_tokens={prompt_tokens} completion_tokens={completion_tokens} latency_ms={target.elapsed.time} status={response.status.code} ts={system.timestamp} id={messageid}</Message>
   </CloudLogging>
   <logLevel>INFO</logLevel>
 </MessageLogging>
