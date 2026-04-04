@@ -35,13 +35,17 @@
   #chat-window::-webkit-scrollbar-track{background:#f1f1f1}
   #chat-window::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
   .tool-badge{font-family:'JetBrains Mono',monospace;font-size:10px}
+  /* Mobile chat height */
+  @media (max-width: 1023px) {
+    #chat-window { min-height: 280px; max-height: 48dvh; overflow-y: auto; }
+  }
 </style>
 </head>
 <body class="bg-cw-gray-50 text-cw-gray-900">
 
 <!-- Nav -->
 <nav class="bg-white border-b border-cw-gray-200 sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
     <div class="flex items-center space-x-4">
       <a href="dashboard.html" class="text-cw-gray-400 hover:text-cw-gray-600 transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -81,7 +85,7 @@
 </div>
 
 <!-- Main layout -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 lg:py-6 flex flex-col lg:flex-row gap-4 lg:gap-6">
 
   <!-- Chat panel -->
   <div class="flex-1 flex flex-col bg-white rounded-2xl border border-cw-gray-200 shadow-sm overflow-hidden min-w-0">
