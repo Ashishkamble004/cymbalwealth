@@ -39,6 +39,8 @@ steps:
         "256Mi",
         "--cpu",
         "1",
+        "--labels",
+        "mobile-responsive=true,build-type=responsive-ui",
       ]
     waitFor: ["push-frontend"]
 
