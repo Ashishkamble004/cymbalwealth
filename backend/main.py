@@ -195,13 +195,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
             run_config = RunConfig(
                 streaming_mode=StreamingMode.BIDI,
                 response_modalities=["AUDIO"],
-                # Language codes: Hindi + English — fixes gibberish transcription for Hinglish
-                input_audio_transcription=types.AudioTranscriptionConfig(
-                    language_codes=["hi-IN", "en-IN"],
-                ),
-                output_audio_transcription=types.AudioTranscriptionConfig(
-                    language_codes=["hi-IN", "en-IN"],
-                ),
+                input_audio_transcription=types.AudioTranscriptionConfig(),
+                output_audio_transcription=types.AudioTranscriptionConfig(),
                 session_resumption=types.SessionResumptionConfig(
                     transparent=True,
                 ),
@@ -212,13 +207,11 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     ),
                 ),
                 speech_config=types.SpeechConfig(
-                    # language_code enables multilingual TTS — model can speak Hindi natively
-                    language_code="hi-IN",
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(
                             voice_name="Charon"
                         )
-                    ),
+                    )
                 ),
             )
 
