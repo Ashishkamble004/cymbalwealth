@@ -7,8 +7,14 @@ import CustomerSupportPage from "./components/CustomerSupportPage";
 
 type AppView = "landing" | "login" | "kyc" | "investments" | "customer-support";
 
+function getInitialView(): AppView {
+  const hash = window.location.hash.slice(1);
+  if (hash === "customer-support") return "customer-support";
+  return "landing";
+}
+
 export default function App() {
-  const [view, setView] = useState<AppView>("landing");
+  const [view, setView] = useState<AppView>(getInitialView);
   const [referenceNumber, setReferenceNumber] = useState("");
 
   const handleStartKYC = useCallback(() => {
