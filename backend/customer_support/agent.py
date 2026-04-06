@@ -201,7 +201,7 @@ async def run_agent(
         retrieval=types.Retrieval(
             vertex_rag_store=types.VertexRagStore(
                 rag_resources=[
-                    types.RagResource(rag_corpus=settings.rag_corpus_resource_name)
+                    types.VertexRagStoreRagResource(rag_corpus=settings.rag_corpus_resource_name)
                 ],
                 similarity_top_k=5,
             )

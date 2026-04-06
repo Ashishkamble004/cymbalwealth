@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import numpy as np
+import math
 import vertexai
 from vertexai.language_models import TextEmbeddingModel
 
@@ -28,11 +28,9 @@ def _get_embedding_model() -> TextEmbeddingModel:
 
 
 def _cosine_similarity(v1: list[float], v2: list[float]) -> float:
-    a, b = np.array(v1), np.array(v2)
-    denom = np.linalg.norm(a) * np.linalg.norm(b)
-    if denom == 0:
-        return 0.0
-    return float(np.dot(a, b) / denom)
+    dot = sum(a * b for a, b in zip(v1, v2))
+    denom = math.sqrt(sum(x * x for x in v1)) * math.sqrt(sum(x * x for x in v2))
+    return dot / denom if denom else 0.0
 
 
 def score_resume(resume_text: str, job_description: str, required_skills: str) -> dict:
