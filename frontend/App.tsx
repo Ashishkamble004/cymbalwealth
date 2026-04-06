@@ -3,8 +3,9 @@ import LandingPage from "./components/LandingPage";
 import LoginPage from "./components/LoginPage";
 import KYCSession from "./components/KYCSession";
 import InvestmentsPage from "./components/InvestmentsPage";
+import CustomerSupportPage from "./components/CustomerSupportPage";
 
-type AppView = "landing" | "login" | "kyc" | "investments";
+type AppView = "landing" | "login" | "kyc" | "investments" | "customer-support";
 
 export default function App() {
   const [view, setView] = useState<AppView>("landing");
@@ -28,12 +29,17 @@ export default function App() {
     setView("investments");
   }, []);
 
+  const handleStartCustomerSupport = useCallback(() => {
+    setView("customer-support");
+  }, []);
+
   return (
     <div className="min-h-screen bg-idfc-gray-50">
       {view === "landing" && (
         <LandingPage
           onStartKYC={handleStartKYC}
           onStartInvestments={handleStartInvestments}
+          onStartCustomerSupport={handleStartCustomerSupport}
         />
       )}
       {view === "login" && <LoginPage onLogin={handleLogin} />}
@@ -45,6 +51,9 @@ export default function App() {
       )}
       {view === "investments" && (
         <InvestmentsPage onBack={handleEndSession} />
+      )}
+      {view === "customer-support" && (
+        <CustomerSupportPage onBack={() => setView("landing")} />
       )}
     </div>
   );
