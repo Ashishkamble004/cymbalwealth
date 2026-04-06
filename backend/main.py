@@ -48,6 +48,7 @@ from session_frames import (
     set_session_filename,
     clear_session,
 )
+from customer_support.router import router as customer_support_router
 
 # Configure logging
 logging.basicConfig(
@@ -77,6 +78,9 @@ runner = Runner(
     agent=kyc_agent,
     session_service=session_service,
 )
+
+
+app.include_router(customer_support_router, prefix="/customer-support")
 
 
 @app.get("/health")
