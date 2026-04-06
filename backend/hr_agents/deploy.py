@@ -23,14 +23,16 @@ REQUIREMENTS = [
     "google-cloud-bigquery",
     "google-cloud-secret-manager",
     "google-cloud-aiplatform",
-    "numpy",
     "vertexai",
     "requests",
 ]
 
+# Local package to bundle — must exist relative to cwd (backend/)
+EXTRA_PACKAGES = ["./hr_agents"]
+
 
 def main() -> None:
-    vertexai.init(project=PROJECT, location=LOCATION)
+    vertexai.init(project=PROJECT, location=LOCATION, staging_bucket="gs://cymbal-wealth-staging")
 
     sys.path.insert(0, ".")
     from hr_agents.policy_qa_agent import create_policy_qa_agent
@@ -57,8 +59,9 @@ def main() -> None:
             remote = reasoning_engines.ReasoningEngine.create(
                 app,
                 requirements=REQUIREMENTS,
+                extra_packages=EXTRA_PACKAGES,
                 display_name=f"cymbal-wealth-{key}",
-                gcs_dir_name=f"gs://{GCS_BUCKET}/agent-engine/{key}",
+                gcs_dir_name=f"agent-engine/{key}",
             )
             config[key] = remote.resource_name
             print(f"  OK  {remote.resource_name}")
