@@ -18,7 +18,7 @@ Globals:
         REDSHIFT_WORKGROUP: !Ref RedshiftWorkgroup
         REDSHIFT_DATABASE: cymbalwealth
         REDSHIFT_SECRET_ARN: !Ref RedshiftAdminSecret
-        BEDROCK_MODEL_ID: us.anthropic.claude-sonnet-4-6
+        BEDROCK_MODEL_ID: us.anthropic.claude-haiku-4-5-20251001-v1:0
         BEDROCK_REGION: us-east-1
 
 Resources:
@@ -114,6 +114,14 @@ Resources:
               Effect: Allow
               Action:
                 - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+            - Sid: MarketplaceAccess
+              Effect: Allow
+              Action:
+                - aws-marketplace:ViewSubscriptions
+                - aws-marketplace:Subscribe
+                - aws-marketplace:Unsubscribe
               Resource: '*'
             - Sid: RedshiftData
               Effect: Allow
@@ -170,6 +178,14 @@ Resources:
               Effect: Allow
               Action:
                 - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+            - Sid: MarketplaceAccess
+              Effect: Allow
+              Action:
+                - aws-marketplace:ViewSubscriptions
+                - aws-marketplace:Subscribe
+                - aws-marketplace:Unsubscribe
               Resource: '*'
             - Sid: RedshiftData
               Effect: Allow
