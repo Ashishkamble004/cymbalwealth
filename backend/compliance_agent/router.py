@@ -9,12 +9,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from google.adk.runners import Runner
-from google.adk.sessions import VertexAiSessionService
-from google.adk.memory import VertexAiMemoryBankService
 from google.genai import types
-
-from .agent import compliance_agent
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +17,21 @@ router = APIRouter(prefix="/compliance", tags=["compliance"])
 
 APP_NAME = "cymbal-compliance"
 
-session_service = VertexAiSessionService(project="general-ak", location="us-central1")
-memory_service = VertexAiMemoryBankService(project="general-ak", location="us-central1")
-
-runner = Runner(
-    agent=compliance_agent,
-    app_name=APP_NAME,
-    session_service=session_service,
-)
+try:
+    from google.adk.runners import Runner
+    from google.adk.sessions import VertexAiSessionService
+    from google.adk.memory import VertexAiMemoryBankService
+    from .agent import compliance_agent
+    session_service = VertexAiSessionService(project="general-ak", location="us-central1")
+    memory_service = VertexAiMemoryBankService(project="general-ak", location="us-central1")
+    runner = Runner(agent=compliance_agent, app_name=APP_NAME, session_service=session_service)
+    _adk_available = True
+except ImportError as e:
+    logger.warning(f"google-adk not available, compliance router degraded: {e}")
+    _adk_available = False
+    runner = None
+    session_service = None
+    memory_service = None
 
 
 class ComplianceQuery(BaseModel):
@@ -48,6 +50,10 @@ class ComplianceResponse(BaseModel):
 @router.post("/query", response_model=ComplianceResponse)
 async def query_compliance(request: ComplianceQuery):
     """Query regulatory compliance data via the Compliance agent."""
+    from fastapi import HTTPException
+    if not _adk_available:
+        raise HTTPException(status_code=503, detail="Compliance agent unavailable: google-adk not installed")
+
     from a2a_client import get_config
 
     config = get_config()

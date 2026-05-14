@@ -234,7 +234,7 @@
         const body = { query: text };
         if (sessionId) body.session_id = sessionId;
 
-        const resp = await fetch('/compliance/query', {
+        const resp = await fetch('https://kyc-backend-mcj3w7ujpq-uc.a.run.app/compliance/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
