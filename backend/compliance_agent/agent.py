@@ -7,6 +7,12 @@ AWS-hosted Regulatory Reporting agent backed by Redshift Serverless.
 
 import os
 
+# Compliance agent uses Vertex AI (ADC via Cloud Run service account),
+# regardless of AUTH_MODE set for the KYC module (which uses AI Studio API key).
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "TRUE")
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT", "general-ak"))
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", os.getenv("GCP_REGION", "us-central1"))
+
 from google.adk.agents import Agent
 from google.genai import types
 
