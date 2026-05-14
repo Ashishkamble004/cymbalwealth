@@ -59,6 +59,7 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const pingIntervalRef = useRef<number | null>(null);
   const isSpeakingRef = useRef(false);
+  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   // Queue for audio playback to prevent overlap
   const audioQueueRef = useRef<AudioBuffer[]>([]);
@@ -174,7 +175,9 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
+    currentSourceRef.current = source;
     source.onended = () => {
+      currentSourceRef.current = null;
       isPlayingRef.current = false;
       if (audioQueueRef.current.length > 0) {
         playNextAudio();
@@ -238,7 +241,14 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
             break;
           }
           case "interrupted": {
-            // User interrupted — clear output state, input stays (user was speaking)
+            // Stop agent audio immediately and clear the queue
+            if (currentSourceRef.current) {
+              try { currentSourceRef.current.stop(); } catch (_) {}
+              currentSourceRef.current = null;
+            }
+            audioQueueRef.current = [];
+            isPlayingRef.current = false;
+            isSpeakingRef.current = false;
             outputTranscriptionIdRef.current = null;
             outputTextBufferRef.current = "";
             break;
@@ -426,6 +436,14 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
       workletNodeRef.current.disconnect();
       workletNodeRef.current = null;
     }
+    // Stop any playing audio
+    if (currentSourceRef.current) {
+      try { currentSourceRef.current.stop(); } catch (_) {}
+      currentSourceRef.current = null;
+    }
+    audioQueueRef.current = [];
+    isPlayingRef.current = false;
+    isSpeakingRef.current = false;
     // Close audio contexts
     if (audioContextRef.current) {
       audioContextRef.current.close();
