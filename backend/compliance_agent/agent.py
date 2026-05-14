@@ -27,12 +27,15 @@ def query_regulatory_data(query: str) -> dict:
     Returns:
         dict with regulatory_report key containing the response.
     """
+    import logging
+    logger = logging.getLogger(__name__)
     from a2a_client import call_regulatory_reporting
 
     try:
         result = call_regulatory_reporting(query)
         return {"regulatory_report": result}
     except Exception as e:
+        logger.error(f"[Compliance] A2A call failed: {e}", exc_info=True)
         return {"regulatory_report": f"Regulatory data unavailable: {str(e)}"}
 
 

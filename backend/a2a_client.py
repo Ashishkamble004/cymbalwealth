@@ -68,8 +68,15 @@ def _get_aws_credentials() -> dict:
         request = google.auth.transport.requests.Request()
         id_token = google.oauth2.id_token.fetch_id_token(request, audience)
 
-        # Exchange for AWS temporary credentials
-        sts = boto3.client("sts", region_name=AWS_REGION)
+        # Exchange for AWS temporary credentials.
+        # AssumeRoleWithWebIdentity doesn't require existing AWS credentials.
+        from botocore import UNSIGNED
+        from botocore.config import Config as BotocoreConfig
+        sts = boto3.client(
+            "sts",
+            region_name=AWS_REGION,
+            config=BotocoreConfig(signature_version=UNSIGNED),
+        )
         response = sts.assume_role_with_web_identity(
             RoleArn=AWS_ROLE_ARN,
             RoleSessionName=f"cymbal-gcp-{uuid.uuid4().hex[:8]}",
