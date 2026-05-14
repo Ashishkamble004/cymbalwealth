@@ -241,10 +241,23 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
             break;
           }
           case "interrupted": {
-            // Stop agent audio immediately and clear the queue
-            if (currentSourceRef.current) {
-              try { currentSourceRef.current.stop(); } catch (_) {}
-              currentSourceRef.current = null;
+            // Smooth barge-in cutoff: ramp gain to 0 over 100ms then stop, avoid audio pop
+            const ctx = playbackContextRef.current;
+            if (ctx && currentSourceRef.current) {
+              try {
+                const g = ctx.createGain();
+                currentSourceRef.current.connect(g);
+                g.connect(ctx.destination);
+                g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+                setTimeout(() => {
+                  try { currentSourceRef.current?.stop(); } catch (_) {}
+                  currentSourceRef.current = null;
+                }, 120);
+              } catch (_) {
+                try { currentSourceRef.current.stop(); } catch (__) {}
+                currentSourceRef.current = null;
+              }
             }
             audioQueueRef.current = [];
             isPlayingRef.current = false;

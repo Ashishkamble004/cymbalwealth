@@ -89,13 +89,31 @@ class _AgentSessionPool:
 
     def _create_session_sync(self) -> tuple[str, str]:
         """Create one session synchronously and return (session_id, user_id)."""
-        agent = self._init_agent()
+        self._init_agent()
         uid = f"pool-{uuid.uuid4().hex[:8]}"
-        session = agent.create_session(user_id=uid)
-        sid = (
-            session.get("id") if isinstance(session, dict)
-            else getattr(session, "id", str(session))
-        )
+
+        # SDK v1.152+: create_session moved to SessionServiceClient (gapic direct)
+        try:
+            from google.cloud.aiplatform_v1beta1.services import session_service
+            from google.cloud.aiplatform_v1beta1.types import Session as AipSession
+            import google.auth
+            credentials, _ = google.auth.default()
+            client = session_service.SessionServiceClient(credentials=credentials)
+            parent = AGENT_ENGINE_ID
+            session_obj = client.create_session(
+                parent=parent,
+                session=AipSession(user_id=uid),
+            )
+            sid = session_obj.name.split("/")[-1]
+        except Exception as new_exc:
+            logger.warning(f"[Pool] New session API failed ({new_exc}), trying legacy")
+            # Legacy fallback: agent.create_session (SDK < 1.150)
+            agent = self._agent
+            session = agent.create_session(user_id=uid)
+            sid = (
+                session.get("id") if isinstance(session, dict)
+                else getattr(session, "id", str(session))
+            )
         return sid, uid
 
     # -- async interface ----------------------------------------------------
