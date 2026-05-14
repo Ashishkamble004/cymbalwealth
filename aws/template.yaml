@@ -1,0 +1,219 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CymbalWealth A2A Agents Stack
+  Multi-cloud A2A protocol agents (Credit Intelligence, Regulatory Reporting)
+  deployed as Lambda functions with HTTP API Gateway endpoints, backed by
+  Redshift Serverless for analytics.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 90
+    MemorySize: 256
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        REDSHIFT_WORKGROUP: !Ref RedshiftWorkgroup
+        REDSHIFT_DATABASE: cymbalwealth
+        REDSHIFT_SECRET_ARN: !Ref RedshiftAdminSecret
+        BEDROCK_MODEL_ID: anthropic.claude-sonnet-4-6
+        BEDROCK_REGION: us-east-1
+
+Resources:
+  # ---------------------------------------------------------------------------
+  # Redshift Serverless
+  # ---------------------------------------------------------------------------
+
+  RedshiftAdminSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: cymbal-wealth-redshift-admin
+      Description: Auto-generated admin credentials for CymbalWealth Redshift Serverless
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  RedshiftNamespace:
+    Type: AWS::RedshiftServerless::Namespace
+    Properties:
+      NamespaceName: cymbal-wealth-ns
+      DbName: cymbalwealth
+      AdminUsername: admin
+      AdminUserPassword: !Sub '{{resolve:secretsmanager:${RedshiftAdminSecret}:SecretString:password}}'
+      IamRoles:
+        - !GetAtt RedshiftRole.Arn
+      DefaultIamRoleArn: !GetAtt RedshiftRole.Arn
+
+  RedshiftWorkgroup:
+    Type: AWS::RedshiftServerless::Workgroup
+    DependsOn: RedshiftNamespace
+    Properties:
+      WorkgroupName: cymbal-wealth-wg
+      NamespaceName: cymbal-wealth-ns
+      BaseCapacity: 8
+      PubliclyAccessible: false
+
+  RedshiftRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cymbal-wealth-redshift-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  # ---------------------------------------------------------------------------
+  # Shared Lambda Layer
+  # ---------------------------------------------------------------------------
+
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cymbal-wealth-shared
+      Description: Shared utilities for CymbalWealth A2A agents (A2A protocol, Redshift client, Bedrock helpers)
+      ContentUri: shared/
+      CompatibleRuntimes:
+        - python3.12
+      CompatibleArchitectures:
+        - arm64
+    Metadata:
+      BuildMethod: python3.12
+      BuildArchitecture: arm64
+
+  # ---------------------------------------------------------------------------
+  # Credit Intelligence A2A Agent
+  # ---------------------------------------------------------------------------
+
+  CreditIntelligenceApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      Description: HTTP API for Credit Intelligence A2A agent
+
+  CreditIntelligenceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cymbal-wealth-credit-intelligence
+      Description: Credit Intelligence A2A agent - credit scoring, risk assessment, portfolio analysis
+      CodeUri: credit_intelligence/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref SharedLayer
+      Policies:
+        - Statement:
+            - Sid: BedrockInvoke
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+            - Sid: RedshiftData
+              Effect: Allow
+              Action:
+                - redshift-data:*
+              Resource: '*'
+            - Sid: SecretsManagerRead
+              Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref RedshiftAdminSecret
+      Events:
+        AgentCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CreditIntelligenceApi
+            Path: /.well-known/agent-card.json
+            Method: GET
+        Ping:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CreditIntelligenceApi
+            Path: /ping
+            Method: GET
+        A2AEndpoint:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CreditIntelligenceApi
+            Path: /
+            Method: POST
+
+  # ---------------------------------------------------------------------------
+  # Regulatory Reporting A2A Agent
+  # ---------------------------------------------------------------------------
+
+  RegulatoryReportingApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      Description: HTTP API for Regulatory Reporting A2A agent
+
+  RegulatoryReportingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cymbal-wealth-regulatory-reporting
+      Description: Regulatory Reporting A2A agent - compliance reports, regulatory filings, audit trails
+      CodeUri: regulatory_reporting/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref SharedLayer
+      Policies:
+        - Statement:
+            - Sid: BedrockInvoke
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+            - Sid: RedshiftData
+              Effect: Allow
+              Action:
+                - redshift-data:*
+              Resource: '*'
+            - Sid: SecretsManagerRead
+              Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref RedshiftAdminSecret
+      Events:
+        AgentCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref RegulatoryReportingApi
+            Path: /.well-known/agent-card.json
+            Method: GET
+        Ping:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref RegulatoryReportingApi
+            Path: /ping
+            Method: GET
+        A2AEndpoint:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref RegulatoryReportingApi
+            Path: /
+            Method: POST
+
+Outputs:
+  CreditIntelligenceUrl:
+    Description: URL for the Credit Intelligence A2A agent
+    Value: !Sub 'https://${CreditIntelligenceApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+  RegulatoryReportingUrl:
+    Description: URL for the Regulatory Reporting A2A agent
+    Value: !Sub 'https://${RegulatoryReportingApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+  RedshiftWorkgroupName:
+    Description: Redshift Serverless workgroup name
+    Value: !Ref RedshiftWorkgroup
+
+  RedshiftSecretArn:
+    Description: ARN of the Redshift admin credentials secret
+    Value: !Ref RedshiftAdminSecret

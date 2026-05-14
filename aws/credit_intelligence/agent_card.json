@@ -1,0 +1,32 @@
+{
+  "name": "Cymbal Wealth Credit Intelligence",
+  "description": "Provides CIBIL-style credit scoring, debt-to-income analysis, and loan eligibility assessments for Cymbal Wealth customers. Backed by Redshift Serverless.",
+  "version": "1.0.0",
+  "url": "https://PLACEHOLDER.execute-api.us-east-1.amazonaws.com/",
+  "protocolVersion": "0.3.0",
+  "preferredTransport": "JSONRPC",
+  "capabilities": {"streaming": false},
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "authentication": {"schemes": ["Bearer"]},
+  "skills": [
+    {
+      "id": "credit-score-lookup",
+      "name": "Credit Score Lookup",
+      "description": "Look up CIBIL credit score and grade for a customer reference number",
+      "tags": ["credit", "cibil", "score"]
+    },
+    {
+      "id": "debt-to-income",
+      "name": "Debt-to-Income Analysis",
+      "description": "Calculate DTI ratio from active loan obligations and income",
+      "tags": ["dti", "income", "loans"]
+    },
+    {
+      "id": "credit-eligibility",
+      "name": "Credit Eligibility Assessment",
+      "description": "Determine loan eligibility with max amount recommendation based on credit profile",
+      "tags": ["eligibility", "loan", "assessment"]
+    }
+  ]
+}

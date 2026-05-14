@@ -1,7 +1,7 @@
-"""Cymbal Wealth — Video KYC Backend Server.
+"""Cymbal Wealth -- Video KYC Backend Server.
 
 FastAPI application with WebSocket endpoint for real-time Video KYC
-using Google ADK with Gemini Live bidirectional streaming.
+using google-genai SDK with Gemini Live bidirectional streaming.
 """
 
 import asyncio
@@ -16,27 +16,16 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load env BEFORE importing agent
+# Load env BEFORE importing other modules
 load_dotenv(Path(__file__).parent / ".env")
-
-# Set Vertex AI environment variables for ADK
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "TRUE")
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT", "general-ak"))
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", os.getenv("GCP_REGION", "us-central1"))
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from google.adk.agents.live_request_queue import LiveRequestQueue
-from google.adk.agents.run_config import RunConfig, StreamingMode
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-# Note: InMemorySessionService is used intentionally for this deployment.
-# KYC sessions are short-lived (5-10 min) and Cloud Run is configured with
-# min-instances=1 + session-affinity, ensuring sessions persist during a call.
-# For horizontal scaling, replace with DatabaseSessionService backed by Cloud SQL.
 from google.genai import types
 
-from kyc_agent import agent as kyc_agent
+from gemini_client import gemini_manager
+from kyc_agent import TOOLS_MAP
+from tool_executor import ToolExecutor
 from storage_utils import (
     get_session_filename,
     save_transcript,
@@ -49,6 +38,7 @@ from session_frames import (
     clear_session,
 )
 from customer_support.router import router as customer_support_router
+from compliance_agent.router import router as compliance_router
 
 # Configure logging
 logging.basicConfig(
@@ -58,7 +48,17 @@ logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
-APP_NAME = "cymbal-wealth-kyc-app"
+# Activate telemetry (optional dependency)
+try:
+    from gemini_live_telemetry import activate, InstrumentationConfig
+    activate(InstrumentationConfig(
+        project_id="general-ak",
+        enable_dashboard=True,
+        enable_json_export=True,
+        enable_gcp_export=True,
+    ))
+except ImportError:
+    logger.warning("gemini-live-telemetry not installed, skipping instrumentation")
 
 app = FastAPI(title="Cymbal Wealth Video KYC", version="1.0.0")
 
@@ -71,16 +71,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-session_service = InMemorySessionService()
-
-runner = Runner(
-    app_name=APP_NAME,
-    agent=kyc_agent,
-    session_service=session_service,
-)
-
-
 app.include_router(customer_support_router, prefix="/customer-support")
+app.include_router(compliance_router)
 
 
 @app.get("/health")
@@ -94,7 +86,12 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
     await websocket.accept()
     logger.info(f"[WS] Connected: user={user_id}, session={session_id}")
 
-    live_request_queue = LiveRequestQueue()
+    # Initialize genai client and config
+    client = gemini_manager.client
+    config = gemini_manager.get_live_config()
+    model_id = gemini_manager.model
+    tool_executor = ToolExecutor(tools_map=TOOLS_MAP)
+
     transcript: list[dict] = []
     reference_number = None
 
@@ -105,232 +102,189 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
 
     MAX_VIDEO_FRAMES = 1800  # ~30 min at 1 fps; prevents OOM on long sessions
 
-    # Ensure session exists
-    session = await session_service.get_session(
-        app_name=APP_NAME, user_id=user_id, session_id=session_id
-    )
-    if session is None:
-        session = await session_service.create_session(
-            app_name=APP_NAME, user_id=user_id, session_id=session_id
-        )
-
-    async def upstream_task():
-        """Route client messages into the ADK LiveRequestQueue."""
-        nonlocal reference_number
-        try:
-            while True:
-                raw = await websocket.receive_text()
-                data = json.loads(raw)
-                msg_type = data.get("type", "")
-
-                if msg_type == "audio":
-                    audio_data = data.get("data", "")
-                    if audio_data:
-                        audio_bytes = base64.b64decode(audio_data)
-                        # Buffer for recording
-                        input_audio_chunks.append(audio_bytes)
-                        audio_blob = types.Blob(
-                            mime_type="audio/pcm;rate=16000",
-                            data=audio_bytes,
-                        )
-                        live_request_queue.send_realtime(audio_blob)
-
-                elif msg_type == "video":
-                    video_data = data.get("data", "")
-                    if video_data:
-                        image_bytes = base64.b64decode(video_data)
-                        # Buffer for recording and store latest frame for captures
-                        if len(video_frames) < MAX_VIDEO_FRAMES:
-                            video_frames.append(image_bytes)
-                        await set_latest_frame(session_id, image_bytes)
-                        image_blob = types.Blob(
-                            mime_type="image/jpeg",
-                            data=image_bytes,
-                        )
-                        live_request_queue.send_realtime(image_blob)
-
-                elif msg_type == "text":
-                    text = data.get("data", "")
-                    if text:
-                        transcript.append({"role": "user", "text": text, "ts": datetime.now(timezone.utc).isoformat()})
-                        live_request_queue.send_content(
-                            types.Content(
-                                parts=[types.Part(text=text)],
-                            )
-                        )
-
-                elif msg_type == "context":
-                    reference_number = data.get("reference_number", "")
-                    # Generate consistent session filename and store it
-                    session_fname = get_session_filename(reference_number, session_id)
-                    await set_session_filename(session_id, session_fname)
-
-                    context_text = (
-                        f"The customer reference number is {reference_number}. "
-                        f"The session ID is {session_id}. "
-                        f"Use this to look up the customer in the database. "
-                        f"Begin the Video KYC process now."
-                    )
-                    live_request_queue.send_content(
-                        types.Content(
-                            parts=[types.Part(text=context_text)],
-                        )
-                    )
-
-                elif msg_type == "end_session":
-                    logger.info(f"[WS] Client ended session: {session_id}")
-                    live_request_queue.close()
-                    break
-
-                elif msg_type == "ping":
-                    await websocket.send_text(json.dumps({"type": "pong"}))
-
-        except WebSocketDisconnect:
-            logger.info(f"[WS] Client disconnected: {session_id}")
-            live_request_queue.close()
-        except Exception as e:
-            logger.error(f"[WS] Upstream error: {e}")
-            traceback.print_exc()
-            live_request_queue.close()
-
-    async def downstream_task():
-        """Route ADK agent events back to the client."""
-        try:
-            run_config = RunConfig(
-                streaming_mode=StreamingMode.BIDI,
-                response_modalities=["AUDIO"],
-                input_audio_transcription=types.AudioTranscriptionConfig(),
-                output_audio_transcription=types.AudioTranscriptionConfig(),
-                session_resumption=types.SessionResumptionConfig(
-                    transparent=True,
-                ),
-                context_window_compression=types.ContextWindowCompressionConfig(
-                    trigger_tokens=64000,
-                    sliding_window=types.SlidingWindow(
-                        target_tokens=32000,
-                    ),
-                ),
-                speech_config=types.SpeechConfig(
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name="Charon"
-                        )
-                    )
-                ),
-            )
-
-            interrupted = False
-
-            async for event in runner.run_live(
-                user_id=user_id,
-                session_id=session_id,
-                live_request_queue=live_request_queue,
-                run_config=run_config,
-            ):
-                # Handle interruptions
-                if hasattr(event, "interrupted") and getattr(event, "interrupted", False):
-                    if not interrupted:
-                        interrupted = True
-                        logger.info("🤐 INTERRUPTION DETECTED")
-                        await websocket.send_text(
-                            json.dumps({
-                                "type": "interrupted",
-                                "data": "Response interrupted by user input"
-                            })
-                        )
-
-                # Handle turn completion
-                if hasattr(event, "turn_complete") and getattr(event, "turn_complete", False):
-                    interrupted = False
-                    await websocket.send_text(
-                        json.dumps({
-                            "type": "turn_complete",
-                        })
-                    )
-
-                # Handle input transcription
-                if event.input_transcription:
-                    if event.input_transcription.text:
-                        finished = bool(event.input_transcription.finished)
-                        logger.debug(f"[WS] input_transcription finished={finished} text={event.input_transcription.text[:60]!r}")
-                        await websocket.send_text(
-                            json.dumps({
-                                "type": "input_transcription",
-                                "text": event.input_transcription.text,
-                                "finished": finished,
-                            })
-                        )
-                        if finished:
-                            transcript.append({
-                                "role": "user",
-                                "text": event.input_transcription.text,
-                                "ts": datetime.now(timezone.utc).isoformat(),
-                                "source": "transcription",
-                            })
-
-                # Handle output transcription
-                if event.output_transcription:
-                    if event.output_transcription.text:
-                        finished = bool(event.output_transcription.finished)
-                        logger.debug(f"[WS] output_transcription finished={finished} text={event.output_transcription.text[:60]!r}")
-                        await websocket.send_text(
-                            json.dumps({
-                                "type": "output_transcription",
-                                "text": event.output_transcription.text,
-                                "finished": finished,
-                            })
-                        )
-                        if finished:
-                            transcript.append({
-                                "role": "agent",
-                                "text": event.output_transcription.text,
-                                "ts": datetime.now(timezone.utc).isoformat(),
-                                "source": "transcription",
-                            })
-
-                # Handle audio content from agent
-                if event.content and event.content.parts:
-                    for part in event.content.parts:
-                        if part.inline_data and part.inline_data.data:
-                            mime_type = part.inline_data.mime_type or ""
-                            if "audio" in mime_type and isinstance(part.inline_data.data, bytes):
-                                # Buffer agent audio for recording
-                                output_audio_chunks.append(part.inline_data.data)
-                                audio_base64 = base64.b64encode(part.inline_data.data).decode("ascii")
-                                await websocket.send_text(
-                                    json.dumps({
-                                        "type": "audio",
-                                        "data": audio_base64,
-                                        "mime_type": mime_type,
-                                    })
-                                )
-                        elif part.text:
-                            transcript.append({
-                                "role": "agent",
-                                "text": part.text,
-                                "ts": datetime.now(timezone.utc).isoformat(),
-                            })
-                            await websocket.send_text(
-                                json.dumps({
-                                    "type": "transcript",
-                                    "role": event.content.role or "model",
-                                    "text": part.text,
-                                })
-                            )
-
-        except Exception as e:
-            logger.error(f"[WS] Downstream error: {e}")
-            traceback.print_exc()
-
     try:
-        await asyncio.gather(upstream_task(), downstream_task())
+        async with client.aio.live.connect(model=model_id, config=config) as session:
+            tool_executor.session = session
+            session_handle = None
+
+            async def send_to_gemini():
+                """Route client WebSocket messages to the Gemini Live session."""
+                nonlocal reference_number
+                try:
+                    while True:
+                        raw = await websocket.receive_text()
+                        data = json.loads(raw)
+                        msg_type = data.get("type", "")
+
+                        if msg_type == "audio":
+                            audio_data = data.get("data", "")
+                            if audio_data:
+                                audio_bytes = base64.b64decode(audio_data)
+                                input_audio_chunks.append(audio_bytes)
+                                if len(input_audio_chunks) % 50 == 1:
+                                    logger.info(f"[WS] Audio chunk #{len(input_audio_chunks)}: {len(audio_bytes)} bytes")
+                                await session.send_realtime_input(
+                                    audio=types.Blob(data=audio_bytes, mime_type="audio/pcm;rate=16000")
+                                )
+
+                        elif msg_type == "video":
+                            video_data = data.get("data", "")
+                            if video_data:
+                                image_bytes = base64.b64decode(video_data)
+                                if len(video_frames) < MAX_VIDEO_FRAMES:
+                                    video_frames.append(image_bytes)
+                                await set_latest_frame(session_id, image_bytes)
+                                await session.send_realtime_input(
+                                    video=types.Blob(data=image_bytes, mime_type="image/jpeg")
+                                )
+
+                        elif msg_type == "text":
+                            text = data.get("data", "")
+                            if text:
+                                transcript.append({"role": "user", "text": text, "ts": datetime.now(timezone.utc).isoformat()})
+                                await session.send_client_content(
+                                    turns=types.Content(role="user", parts=[types.Part(text=text)])
+                                )
+
+                        elif msg_type == "context":
+                            reference_number = data.get("reference_number", "")
+                            session_fname = get_session_filename(reference_number, session_id)
+                            await set_session_filename(session_id, session_fname)
+                            context_text = (
+                                f"The customer reference number is {reference_number}. "
+                                f"The session ID is {session_id}. "
+                                f"Use this to look up the customer in the database. "
+                                f"Begin the Video KYC process now."
+                            )
+                            await session.send_client_content(
+                                turns=types.Content(role="user", parts=[types.Part(text=context_text)])
+                            )
+
+                        elif msg_type == "end_session":
+                            logger.info(f"[WS] Client ended session: {session_id}")
+                            break
+
+                        elif msg_type == "ping":
+                            await websocket.send_text(json.dumps({"type": "pong"}))
+
+                except WebSocketDisconnect:
+                    logger.info(f"[WS] Client disconnected: {session_id}")
+                except Exception as e:
+                    logger.error(f"[WS] Upstream error: {e}")
+                    traceback.print_exc()
+
+            _ws_closed = False
+
+            async def safe_send(data: str):
+                """Send text to the client WebSocket, ignoring errors if already closed."""
+                nonlocal _ws_closed
+                if _ws_closed:
+                    return
+                try:
+                    await websocket.send_text(data)
+                except Exception:
+                    _ws_closed = True
+
+            async def receive_from_gemini():
+                """Route Gemini Live session events back to the client WebSocket."""
+                nonlocal session_handle
+                try:
+                    while True:
+                        async for message in session.receive():
+                            if message.session_resumption_update:
+                                update = message.session_resumption_update
+                                if update.resumable and update.new_handle:
+                                    session_handle = update.new_handle
+
+                            if message.data is not None:
+                                output_audio_chunks.append(message.data)
+                                audio_base64 = base64.b64encode(message.data).decode("ascii")
+                                await safe_send(json.dumps({
+                                    "type": "audio",
+                                    "data": audio_base64,
+                                    "mime_type": "audio/pcm;rate=24000",
+                                }))
+
+                            if message.server_content:
+                                sc = message.server_content
+
+                                if sc.interrupted:
+                                    await safe_send(json.dumps({
+                                        "type": "interrupted",
+                                        "data": "Response interrupted by user input"
+                                    }))
+
+                                if sc.turn_complete:
+                                    await safe_send(json.dumps({"type": "turn_complete"}))
+
+                                if sc.input_transcription and sc.input_transcription.text:
+                                    finished = bool(sc.input_transcription.finished)
+                                    await safe_send(json.dumps({
+                                        "type": "input_transcription",
+                                        "text": sc.input_transcription.text,
+                                        "finished": finished,
+                                    }))
+                                    if finished:
+                                        transcript.append({
+                                            "role": "user", "text": sc.input_transcription.text,
+                                            "ts": datetime.now(timezone.utc).isoformat(), "source": "transcription",
+                                        })
+
+                                if sc.output_transcription and sc.output_transcription.text:
+                                    finished = bool(sc.output_transcription.finished)
+                                    await safe_send(json.dumps({
+                                        "type": "output_transcription",
+                                        "text": sc.output_transcription.text,
+                                        "finished": finished,
+                                    }))
+                                    if finished:
+                                        transcript.append({
+                                            "role": "agent", "text": sc.output_transcription.text,
+                                            "ts": datetime.now(timezone.utc).isoformat(), "source": "transcription",
+                                        })
+
+                                if sc.model_turn and sc.model_turn.parts:
+                                    for part in sc.model_turn.parts:
+                                        if part.text:
+                                            transcript.append({
+                                                "role": "agent", "text": part.text,
+                                                "ts": datetime.now(timezone.utc).isoformat(),
+                                            })
+                                            await safe_send(json.dumps({
+                                                "type": "transcript",
+                                                "role": "model",
+                                                "text": part.text,
+                                            }))
+
+                            if message.tool_call:
+                                await tool_executor.handle_tool_call(message.tool_call)
+
+                        await asyncio.sleep(0.01)
+
+                except asyncio.CancelledError:
+                    logger.info(f"[WS] Receive task cancelled: {session_id}")
+                except Exception as e:
+                    logger.error(f"[WS] Downstream error: {e}")
+                    traceback.print_exc()
+
+            send_task = asyncio.create_task(send_to_gemini())
+            recv_task = asyncio.create_task(receive_from_gemini())
+            done, pending = await asyncio.wait(
+                [send_task, recv_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in pending:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
     except Exception as e:
         logger.error(f"[WS] Session error: {e}")
         traceback.print_exc()
     finally:
-        live_request_queue.close()
-
-        # Save all session data to GCS
+        # Save session data to GCS
         if reference_number:
             from session_frames import get_session_filename as get_fname
             session_fname = await get_fname(session_id) or get_session_filename(reference_number, session_id)
@@ -356,7 +310,6 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                     save_video_recording(session_fname, video_frames, fps=1.0)
                 except Exception as e:
                     logger.error(f"[WS] Failed to save video recording: {e}")
-
 
         # Clean up shared state
         await clear_session(session_id)

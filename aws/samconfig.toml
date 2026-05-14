@@ -1,0 +1,14 @@
+# SAM configuration for CymbalWealth A2A Agents Stack
+# Deploy with: cd aws && sam build && sam deploy
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "cymbal-wealth-a2a"
+region = "us-east-1"
+resolve_s3 = true
+capabilities = "CAPABILITY_NAMED_IAM"
+confirm_changeset = true
+
+[default.build.parameters]
+use_container = false

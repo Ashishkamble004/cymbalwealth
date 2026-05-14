@@ -1,0 +1,18 @@
+{
+  "name": "Cymbal Wealth Regulatory Reporting",
+  "description": "Provides Basel III capital adequacy (CRAR), liquidity coverage (LCR/NSFR), and NPA analysis for Cymbal Wealth's regulatory compliance. Backed by Redshift Serverless.",
+  "version": "1.0.0",
+  "url": "https://PLACEHOLDER.execute-api.us-east-1.amazonaws.com/",
+  "protocolVersion": "0.3.0",
+  "preferredTransport": "JSONRPC",
+  "capabilities": {"streaming": false},
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "authentication": {"schemes": ["Bearer"]},
+  "skills": [
+    {"id": "capital-adequacy", "name": "Capital Adequacy (CRAR)", "description": "Report CRAR (Capital to Risk-weighted Assets Ratio) vs RBI minimum of 9%", "tags": ["crar", "basel3", "capital", "rbi"]},
+    {"id": "liquidity-ratios", "name": "Liquidity Coverage Ratios", "description": "Report LCR and NSFR liquidity metrics", "tags": ["lcr", "nsfr", "liquidity"]},
+    {"id": "npa-summary", "name": "NPA Summary", "description": "Report Gross NPA %, Net NPA %, and provision coverage", "tags": ["npa", "asset-quality", "provisions"]},
+    {"id": "basel3-summary", "name": "Basel III Summary", "description": "Comprehensive Basel III report with Tier 1, Tier 2 capital breakdown and risk-weighted assets", "tags": ["basel3", "tier1", "tier2", "rwa"]}
+  ]
+}
