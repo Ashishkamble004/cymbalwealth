@@ -62,36 +62,55 @@ def _get_aws_credentials() -> dict:
         import google.auth.transport.requests
         import google.oauth2.id_token
         import boto3
+        import requests as http_requests
+        import xml.etree.ElementTree as ET
 
-        # Get GCP ID token — audience must be the AWS account ID
-        audience = f"https://sts.amazonaws.com"
+        # Get GCP ID token — audience is the STS endpoint
+        audience = "https://sts.amazonaws.com"
         request = google.auth.transport.requests.Request()
         id_token = google.oauth2.id_token.fetch_id_token(request, audience)
 
-        # Exchange for AWS temporary credentials.
-        # AssumeRoleWithWebIdentity doesn't require existing AWS credentials.
-        from botocore import UNSIGNED
-        from botocore.config import Config as BotocoreConfig
-        sts = boto3.client(
-            "sts",
-            region_name=AWS_REGION,
-            config=BotocoreConfig(signature_version=UNSIGNED),
-        )
-        response = sts.assume_role_with_web_identity(
-            RoleArn=AWS_ROLE_ARN,
-            RoleSessionName=f"cymbal-gcp-{uuid.uuid4().hex[:8]}",
-            WebIdentityToken=id_token,
-            DurationSeconds=3600,
-        )
-
-        creds = response["Credentials"]
-        _cached_creds = {
-            "aws_access_key_id": creds["AccessKeyId"],
-            "aws_secret_access_key": creds["SecretAccessKey"],
-            "aws_session_token": creds["SessionToken"],
+        # AssumeRoleWithWebIdentity via unsigned HTTP POST — no AWS credentials needed.
+        # AWS allows this for web identity token exchanges.
+        sts_url = f"https://sts.{AWS_REGION}.amazonaws.com/"
+        params = {
+            "Version": "2011-06-15",
+            "Action": "AssumeRoleWithWebIdentity",
+            "RoleArn": AWS_ROLE_ARN,
+            "RoleSessionName": f"cymbal-gcp-{uuid.uuid4().hex[:8]}",
+            "WebIdentityToken": id_token,
+            "DurationSeconds": "3600",
         }
-        _creds_expiry = creds["Expiration"]
-        logger.info("[A2A] OIDC credentials refreshed via AssumeRoleWithWebIdentity")
+        resp = http_requests.post(sts_url, data=params, timeout=10)
+        resp.raise_for_status()
+
+        # Parse XML response
+        ns = {"sts": "https://sts.amazonaws.com/doc/2011-06-15/"}
+        root = ET.fromstring(resp.text)
+        result = root.find(".//sts:AssumeRoleWithWebIdentityResult", ns)
+        if result is None:
+            # Try without namespace
+            result = root.find(".//AssumeRoleWithWebIdentityResult")
+        cred_el = result.find("sts:Credentials", ns) if result is not None else None
+        if cred_el is None and result is not None:
+            cred_el = result.find("Credentials")
+
+        if cred_el is None:
+            raise ValueError(f"No Credentials in STS response: {resp.text[:300]}")
+
+        def _text(el, tag):
+            node = el.find(f"sts:{tag}", ns) or el.find(tag)
+            return node.text if node is not None else None
+
+        _cached_creds = {
+            "aws_access_key_id": _text(cred_el, "AccessKeyId"),
+            "aws_secret_access_key": _text(cred_el, "SecretAccessKey"),
+            "aws_session_token": _text(cred_el, "SessionToken"),
+        }
+        from datetime import datetime
+        expiry_str = _text(cred_el, "Expiration")
+        _creds_expiry = datetime.fromisoformat(expiry_str.replace("Z", "+00:00")) if expiry_str else datetime.now(timezone.utc) + timedelta(hours=1)
+        logger.info("[A2A] OIDC credentials refreshed via unsigned STS AssumeRoleWithWebIdentity")
         return _cached_creds
 
     except Exception as exc:
