@@ -65,8 +65,9 @@ def _get_aws_credentials() -> dict:
         import requests as http_requests
         import xml.etree.ElementTree as ET
 
-        # Get GCP ID token — audience is the STS endpoint
-        audience = "https://sts.amazonaws.com"
+        # Get GCP ID token — audience must match the client ID registered in AWS OIDC provider
+        # We registered the AWS account ID (453809273083) as the initial client ID
+        audience = "453809273083"
         request = google.auth.transport.requests.Request()
         id_token = google.oauth2.id_token.fetch_id_token(request, audience)
 
