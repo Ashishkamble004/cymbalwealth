@@ -107,7 +107,6 @@ def _get_aws_credentials() -> dict:
             "aws_secret_access_key": _text(cred_el, "SecretAccessKey"),
             "aws_session_token": _text(cred_el, "SessionToken"),
         }
-        from datetime import datetime
         expiry_str = _text(cred_el, "Expiration")
         _creds_expiry = datetime.fromisoformat(expiry_str.replace("Z", "+00:00")) if expiry_str else datetime.now(timezone.utc) + timedelta(hours=1)
         logger.info("[A2A] OIDC credentials refreshed via unsigned STS AssumeRoleWithWebIdentity")
