@@ -71,8 +71,8 @@ def _get_aws_credentials() -> dict:
         id_token = google.oauth2.id_token.fetch_id_token(request, audience)
 
         # AssumeRoleWithWebIdentity via unsigned HTTP POST — no AWS credentials needed.
-        # AWS allows this for web identity token exchanges.
-        sts_url = f"https://sts.{AWS_REGION}.amazonaws.com/"
+        # Use global STS endpoint (not regional) for OIDC web identity exchanges.
+        sts_url = "https://sts.amazonaws.com/"
         params = {
             "Version": "2011-06-15",
             "Action": "AssumeRoleWithWebIdentity",
@@ -83,7 +83,7 @@ def _get_aws_credentials() -> dict:
         }
         resp = http_requests.post(sts_url, data=params, timeout=10)
         if not resp.ok:
-            logger.error(f"[A2A] STS response {resp.status_code}: {resp.text[:500]}")
+            logger.error(f"[A2A] STS response {resp.status_code}: {resp.text[:2000]}")
         resp.raise_for_status()
 
         # Parse XML response
