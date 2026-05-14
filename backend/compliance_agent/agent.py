@@ -31,7 +31,14 @@ def query_regulatory_data(query: str) -> dict:
 
 
 def create_compliance_agent() -> Agent:
-    """Factory function for Agent Engine deployment (same pattern as hr_agents/deploy.py)."""
+    """Factory function for Agent Engine deployment (same pattern as hr_agents/deploy.py).
+
+    Knowledge Catalogue (Dataplex MCP): when MCP Toolbox is active, add the
+    `discover_regulatory_tables` tool from mcp_config.get_mcp_toolbox_config()
+    to the tools list below. This lets the agent semantically discover regulatory
+    table schemas via Knowledge Catalogue instead of relying on hardcoded SQL.
+    See backend/compliance_agent/mcp_config.py and mcp_toolbox_config.yaml.
+    """
     return Agent(
         name="compliance_reporting_agent",
         model=os.environ.get("COMPLIANCE_MODEL", "gemini-2.5-flash"),

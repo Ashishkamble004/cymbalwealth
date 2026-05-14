@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter
 from pydantic import BaseModel
 from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import VertexAiSessionService
+from google.adk.memory import VertexAiMemoryBankService
 from google.genai import types
 
 from .agent import compliance_agent
@@ -19,8 +20,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
-session_service = InMemorySessionService()
 APP_NAME = "cymbal-compliance"
+
+session_service = VertexAiSessionService(project="general-ak", location="us-central1")
+memory_service = VertexAiMemoryBankService(project="general-ak", location="us-central1")
 
 runner = Runner(
     agent=compliance_agent,
@@ -70,6 +73,17 @@ async def query_compliance(request: ComplianceQuery):
             for part in event.content.parts:
                 if part.text:
                     response_text += part.text
+
+    # Ingest the completed session into Vertex AI Memory Bank so that user
+    # context (regulatory queries, prior decisions) persists across sessions.
+    try:
+        session_obj = await session_service.get_session(
+            app_name=APP_NAME, user_id=user_id, session_id=session_id
+        )
+        await memory_service.add_session_to_memory(session=session_obj)
+        logger.info(f"[Compliance] Memory Bank ingestion complete for session {session_id}")
+    except Exception as e:
+        logger.warning(f"Memory Bank ingestion failed: {e}")
 
     return ComplianceResponse(
         response=response_text or "No response generated.",

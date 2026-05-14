@@ -1,0 +1,18 @@
+# MCP Toolbox config for Knowledge Catalogue integration
+# Start with: toolbox serve --config=backend/compliance_agent/mcp_toolbox_config.yaml
+# Requires: pip install toolbox-core
+
+serverAddress: "0.0.0.0:5000"
+
+sources:
+  knowledge-catalogue:
+    kind: "dataplex"
+    project: "general-ak"
+    location: "us-central1"
+
+tools:
+  discover_regulatory_tables:
+    kind: "dataplex-search"
+    source: "knowledge-catalogue"
+    description: "Semantic search for Cymbal Wealth regulatory data tables in Knowledge Catalogue"
+    defaultQuery: "regulatory capital adequacy liquidity NPA"

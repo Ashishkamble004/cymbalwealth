@@ -1,0 +1,38 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-backend"
+    args:
+      [
+        "build",
+        "-t",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}",
+        "./backend",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-backend"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}",
+      ]
+    waitFor: ["build-backend"]
+
+  - name: "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/kyc-backend:${_TAG}"
+    id: "deploy-compliance-agent"
+    entrypoint: python
+    args: ["-m", "compliance_agent.deploy"]
+    dir: backend
+    env:
+      - "GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
+      - "GOOGLE_CLOUD_LOCATION=${_REGION}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=TRUE"
+    waitFor: ["push-backend"]
+
+substitutions:
+  _REGION: us-central1
+  _REPO: cymbal-wealth
+  _TAG: latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

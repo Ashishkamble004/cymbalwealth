@@ -21,6 +21,19 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from vertexai import agent_engines
 
+# Memory Bank — stub import for future ingestion of Agent Engine sessions.
+# VertexAiMemoryBankService expects an ADK session object, but Agent Engine
+# sessions are managed by vertexai.agent_engines and are not exposed as ADK
+# Session objects directly. Integration requires either:
+#   (a) a Vertex AI Sessions API bridge once GA, or
+#   (b) converting the agent transcript (results list) into a synthetic ADK session.
+# TODO(memory-bank): wire up ingestion once the Agent Engine → ADK session bridge is available.
+try:
+    from google.adk.memory import VertexAiMemoryBankService  # noqa: F401
+    _memory_service: "VertexAiMemoryBankService | None" = None  # lazily instantiated after constants are set
+except ImportError:
+    _memory_service = None  # graceful degradation if ADK memory module not yet available
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +46,16 @@ AGENT_ENGINE_ID = os.getenv(
 )
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "general-ak")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+
+# Lazily instantiate VertexAiMemoryBankService now that PROJECT_ID / LOCATION are resolved.
+# See import comment above for why this is a stub (Agent Engine sessions ≠ ADK sessions).
+if _memory_service is None:
+    try:
+        from google.adk.memory import VertexAiMemoryBankService as _VAMBS
+        _memory_service = _VAMBS(project=PROJECT_ID, location=LOCATION)
+        logger.info("[HomeLoan] VertexAiMemoryBankService stub ready (pending Agent Engine session bridge)")
+    except Exception as _mem_exc:
+        logger.warning(f"[HomeLoan] VertexAiMemoryBankService unavailable: {_mem_exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -373,6 +396,27 @@ async def verify_documents(request: VerifyRequest):
                         )
 
                 loop.call_soon_threadsafe(queue.put_nowait, {"type": "_done"})
+
+                # ----------------------------------------------------------------
+                # TODO(memory-bank): Ingest this session into Vertex AI Memory Bank.
+                #
+                # Agent Engine sessions are owned by vertexai.agent_engines and are
+                # not surfaced as google.adk.sessions.Session objects, so we cannot
+                # call _memory_service.add_session_to_memory(session=...) directly.
+                #
+                # Once the Agent Engine → ADK session bridge is available (or when
+                # the Vertex AI Sessions API supports Agent Engine sessions), replace
+                # this comment with:
+                #
+                #   adk_session = convert_agent_engine_session(session_id, pool_uid, results)
+                #   asyncio.run_coroutine_threadsafe(
+                #       _memory_service.add_session_to_memory(session=adk_session), loop
+                #   ).result()
+                #
+                # For now the verification transcript is persisted to GCS as a fallback
+                # (see the report_blob.upload_from_string call below).
+                # ----------------------------------------------------------------
+
             except Exception as exc:
                 logger.error(f"[HomeLoan] Agent thread error: {exc}")
                 loop.call_soon_threadsafe(
