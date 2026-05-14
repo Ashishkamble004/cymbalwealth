@@ -1,15 +1,16 @@
 """A2A Client — calls remote A2A agents from GCP.
 
 Supports two routing modes:
-- Direct: calls AWS API Gateway endpoints (default, for now)
+- Direct: calls AWS Bedrock AgentCore Runtime via boto3 SigV4 (default)
 - Agent Gateway: routes through GCP Agent Gateway (when enabled)
 
 Config via environment variables:
-- A2A_CREDIT_ENDPOINT: Credit Intelligence agent URL
-- A2A_REGULATORY_ENDPOINT: Regulatory Reporting agent URL
-- A2A_GATEWAY_ENABLED: "true" to route via Agent Gateway (default: "false")
+- A2A_CREDIT_ARN: Credit Intelligence AgentCore Runtime ARN
+- A2A_REGULATORY_ARN: Regulatory Reporting AgentCore Runtime ARN
+- A2A_GATEWAY_ENABLED: "true" to route via GCP Agent Gateway (default: "false")
 - A2A_GATEWAY_URL: Agent Gateway base URL (when enabled)
-- A2A_AUTH_TOKEN: Bearer token for AWS API Gateway auth (direct mode)
+- AWS_REGION: AWS region for AgentCore (default: "us-east-1")
+- AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN: AWS credentials
 """
 
 import json
@@ -17,9 +18,17 @@ import logging
 import os
 import uuid
 
-import requests
-
 logger = logging.getLogger(__name__)
+
+CREDIT_ARN = os.environ.get(
+    "A2A_CREDIT_ARN",
+    "arn:aws:bedrock-agentcore:us-east-1:453809273083:runtime/cymbal_credit_intelligence-26fPFAF9gS",
+)
+REGULATORY_ARN = os.environ.get(
+    "A2A_REGULATORY_ARN",
+    "arn:aws:bedrock-agentcore:us-east-1:453809273083:runtime/cymbal_regulatory_reporting-vA2VQ08PxI",
+)
+AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 
 
 class A2AError(Exception):
@@ -28,19 +37,64 @@ class A2AError(Exception):
 
 def get_config() -> dict:
     return {
-        "credit_endpoint": os.environ.get("A2A_CREDIT_ENDPOINT", ""),
-        "regulatory_endpoint": os.environ.get("A2A_REGULATORY_ENDPOINT", ""),
+        "credit_arn": CREDIT_ARN,
+        "regulatory_arn": REGULATORY_ARN,
         "gateway_enabled": os.environ.get("A2A_GATEWAY_ENABLED", "false").lower() == "true",
         "gateway_url": os.environ.get("A2A_GATEWAY_URL", ""),
-        "auth_token": os.environ.get("A2A_AUTH_TOKEN", ""),
+        "aws_region": AWS_REGION,
     }
 
 
-def call_a2a_agent(endpoint_url: str, user_message: str, auth_token: str = "") -> str:
-    headers = {"Content-Type": "application/json"}
-    if auth_token:
-        headers["Authorization"] = f"Bearer {auth_token}"
+def _call_agentcore(runtime_arn: str, user_message: str) -> str:
+    """Invoke an AgentCore Runtime agent using boto3 (SigV4 auth, no HTTP URLs needed)."""
+    import boto3
 
+    client = boto3.client("bedrock-agentcore", region_name=AWS_REGION)
+    session_id = str(uuid.uuid4())  # 36 chars — satisfies AgentCore min 33
+
+    payload = json.dumps({
+        "jsonrpc": "2.0",
+        "id": str(uuid.uuid4()),
+        "method": "message/send",
+        "params": {
+            "message": {
+                "role": "user",
+                "parts": [{"kind": "text", "text": user_message}],
+                "messageId": str(uuid.uuid4()),
+            }
+        },
+    }).encode()
+
+    try:
+        resp = client.invoke_agent_runtime(
+            agentRuntimeArn=runtime_arn,
+            runtimeSessionId=session_id,
+            payload=payload,
+            qualifier="DEFAULT",
+        )
+    except Exception as exc:
+        raise A2AError(f"AgentCore invocation failed: {exc}") from exc
+
+    try:
+        body = json.loads(resp["response"].read().decode("utf-8"))
+    except (KeyError, ValueError) as exc:
+        raise A2AError(f"Invalid AgentCore response: {exc}") from exc
+
+    if "error" in body:
+        err = body["error"]
+        raise A2AError(f"A2A error {err.get('code')}: {err.get('message')}")
+
+    try:
+        return body["result"]["artifacts"][0]["parts"][0]["text"]
+    except (KeyError, IndexError) as exc:
+        raise A2AError(f"Unexpected response structure: {json.dumps(body)[:300]}") from exc
+
+
+def _call_via_gateway(gateway_url: str, path: str, user_message: str) -> str:
+    """Route through GCP Agent Gateway when enabled."""
+    import requests
+
+    endpoint = f"{gateway_url.rstrip('/')}/{path}"
     payload = {
         "jsonrpc": "2.0",
         "id": str(uuid.uuid4()),
@@ -53,52 +107,31 @@ def call_a2a_agent(endpoint_url: str, user_message: str, auth_token: str = "") -
             }
         },
     }
-
     try:
-        resp = requests.post(endpoint_url, json=payload, headers=headers, timeout=60)
+        resp = requests.post(endpoint, json=payload, timeout=90)
         resp.raise_for_status()
-    except requests.RequestException as exc:
-        raise A2AError(f"A2A request failed: {exc}") from exc
-
-    try:
         body = resp.json()
-    except ValueError as exc:
-        raise A2AError(f"Invalid JSON response: {resp.text[:200]}") from exc
+    except Exception as exc:
+        raise A2AError(f"Agent Gateway call failed: {exc}") from exc
 
     if "error" in body:
-        err = body["error"]
-        raise A2AError(f"A2A error {err.get('code')}: {err.get('message')}")
+        raise A2AError(f"A2A error: {body['error']}")
 
     try:
         return body["result"]["artifacts"][0]["parts"][0]["text"]
     except (KeyError, IndexError) as exc:
-        raise A2AError(f"Unexpected response structure: {json.dumps(body)[:300]}") from exc
+        raise A2AError(f"Unexpected response: {json.dumps(body)[:300]}") from exc
 
 
 def call_credit_intelligence(query: str) -> str:
     config = get_config()
     if config["gateway_enabled"]:
-        endpoint = f"{config['gateway_url']}/credit-intelligence"
-        return call_a2a_agent(endpoint, query)
-    endpoint = config["credit_endpoint"]
-    if not endpoint:
-        raise A2AError("A2A_CREDIT_ENDPOINT not configured")
-    return call_a2a_agent(endpoint, query, auth_token=config["auth_token"])
+        return _call_via_gateway(config["gateway_url"], "credit-intelligence", query)
+    return _call_agentcore(config["credit_arn"], query)
 
 
 def call_regulatory_reporting(query: str) -> str:
     config = get_config()
     if config["gateway_enabled"]:
-        endpoint = f"{config['gateway_url']}/regulatory-reporting"
-        return call_a2a_agent(endpoint, query)
-    endpoint = config["regulatory_endpoint"]
-    if not endpoint:
-        raise A2AError("A2A_REGULATORY_ENDPOINT not configured")
-    return call_a2a_agent(endpoint, query, auth_token=config["auth_token"])
-
-
-def fetch_agent_card(endpoint_url: str) -> dict:
-    url = f"{endpoint_url.rstrip('/')}/.well-known/agent-card.json"
-    resp = requests.get(url, timeout=10)
-    resp.raise_for_status()
-    return resp.json()
+        return _call_via_gateway(config["gateway_url"], "regulatory-reporting", query)
+    return _call_agentcore(config["regulatory_arn"], query)
