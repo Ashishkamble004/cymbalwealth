@@ -263,8 +263,12 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   // Start capturing audio from the microphone
   const startAudioCapture = useCallback(
     async (stream: MediaStream) => {
-      const audioContext = new AudioContext({ sampleRate: INPUT_SAMPLE_RATE });
+      // Use the browser's default sample rate (typically 44100 or 48000).
+      // Requesting 16000 is ignored by most browsers and can produce silent/corrupt audio.
+      const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
+      const nativeRate = audioContext.sampleRate;
+      console.log(`[Audio] AudioContext created at ${nativeRate}Hz (target: ${INPUT_SAMPLE_RATE}Hz)`);
 
       const processorCode = getPCMProcessorCode();
       const blob = new Blob([processorCode], { type: "application/javascript" });
@@ -276,15 +280,20 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
       const workletNode = new AudioWorkletNode(audioContext, "pcm-processor");
       workletNodeRef.current = workletNode;
 
+      let chunkCount = 0;
       workletNode.port.onmessage = (event) => {
         if (event.data.pcmData) {
           const resampled = resampleAudio(
             event.data.pcmData,
-            audioContext.sampleRate,
+            nativeRate,
             INPUT_SAMPLE_RATE
           );
           const base64 = encodeAudioToBase64(resampled);
           sendMessage({ type: "audio", data: base64 });
+          chunkCount++;
+          if (chunkCount <= 3) {
+            console.log(`[Audio] chunk #${chunkCount}: ${event.data.pcmData.length} samples @ ${nativeRate}Hz → ${resampled.length} samples @ ${INPUT_SAMPLE_RATE}Hz`);
+          }
         }
       };
 

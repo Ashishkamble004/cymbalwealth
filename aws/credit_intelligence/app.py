@@ -24,7 +24,7 @@ from redshift_client import execute_query_json
 # Configuration
 # ---------------------------------------------------------------------------
 
-BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-sonnet-4-6")
+BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-6")
 BEDROCK_REGION = os.environ.get("BEDROCK_REGION", "us-east-1")
 
 bedrock = boto3.client("bedrock-runtime", region_name=BEDROCK_REGION)

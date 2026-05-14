@@ -38,7 +38,7 @@ from session_frames import (
     clear_session,
 )
 from customer_support.router import router as customer_support_router
-from compliance_agent.router import router as compliance_router
+# from compliance_agent.router import router as compliance_router
 
 # Configure logging
 logging.basicConfig(
@@ -48,19 +48,28 @@ logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
-# Activate telemetry (optional dependency)
-try:
-    from gemini_live_telemetry import activate, InstrumentationConfig
-    activate(InstrumentationConfig(
-        project_id="general-ak",
-        enable_dashboard=True,
-        enable_json_export=True,
-        enable_gcp_export=True,
-    ))
-except ImportError:
-    logger.warning("gemini-live-telemetry not installed, skipping instrumentation")
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Cymbal Wealth Video KYC", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app):
+    # Activate telemetry inside the event loop so dashboard creation and
+    # JSON periodic flush work correctly (requires a running asyncio loop).
+    try:
+        from gemini_live_telemetry import activate, InstrumentationConfig
+        activate(InstrumentationConfig(
+            project_id="general-ak",
+            enable_dashboard=True,
+            enable_json_export=True,
+            enable_gcp_export=True,
+        ))
+        logger.info("gemini-live-telemetry activated successfully")
+    except ImportError:
+        logger.warning("gemini-live-telemetry not installed, skipping instrumentation")
+    except Exception as exc:
+        logger.warning(f"Telemetry activation failed: {exc}")
+    yield
+
+app = FastAPI(title="Cymbal Wealth Video KYC", version="1.0.0", lifespan=lifespan)
 
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://cymbalwealth.ak-demos.com,https://kyc-frontend-mcj3w7ujpq-uc.a.run.app").split(",")
 app.add_middleware(

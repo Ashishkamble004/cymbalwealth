@@ -12,13 +12,13 @@ Globals:
     Timeout: 90
     MemorySize: 256
     Architectures:
-      - arm64
+      - x86_64
     Environment:
       Variables:
         REDSHIFT_WORKGROUP: !Ref RedshiftWorkgroup
         REDSHIFT_DATABASE: cymbalwealth
         REDSHIFT_SECRET_ARN: !Ref RedshiftAdminSecret
-        BEDROCK_MODEL_ID: anthropic.claude-sonnet-4-6
+        BEDROCK_MODEL_ID: us.anthropic.claude-sonnet-4-6
         BEDROCK_REGION: us-east-1
 
 Resources:
@@ -84,10 +84,10 @@ Resources:
       CompatibleRuntimes:
         - python3.12
       CompatibleArchitectures:
-        - arm64
+        - x86_64
     Metadata:
       BuildMethod: python3.12
-      BuildArchitecture: arm64
+      BuildArchitecture: x86_64
 
   # ---------------------------------------------------------------------------
   # Credit Intelligence A2A Agent
