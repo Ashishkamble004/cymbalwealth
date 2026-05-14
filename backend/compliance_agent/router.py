@@ -4,6 +4,7 @@ Provides a REST endpoint for the demo portal to query regulatory data.
 """
 
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -17,16 +18,28 @@ router = APIRouter(prefix="/compliance", tags=["compliance"])
 
 APP_NAME = "cymbal-compliance"
 
+AGENT_ENGINE_ID = os.environ.get("COMPLIANCE_AGENT_ENGINE_ID", "")
+
 try:
     from google.adk.runners import Runner
-    from google.adk.sessions import VertexAiSessionService
-    from .agent import compliance_agent
-    session_service = VertexAiSessionService(project="general-ak", location="us-central1")
-    # Memory Bank requires an agent_engine_id once compliance agent is deployed to Agent Engine.
-    # Until then, use InMemoryMemoryService as a no-op placeholder.
     from google.adk.memory import InMemoryMemoryService
+    from .agent import compliance_agent
+
+    if AGENT_ENGINE_ID:
+        # Production: agent deployed to Agent Engine — use Vertex AI session service
+        from google.adk.sessions import VertexAiSessionService
+        session_service = VertexAiSessionService(project="general-ak", location="us-central1")
+        app_name = AGENT_ENGINE_ID
+        logger.info(f"[Compliance] Using VertexAiSessionService with engine {AGENT_ENGINE_ID}")
+    else:
+        # Dev/staging: use in-memory session service until Agent Engine deploy
+        from google.adk.sessions import InMemorySessionService
+        session_service = InMemorySessionService()
+        app_name = APP_NAME
+        logger.info("[Compliance] Using InMemorySessionService (no COMPLIANCE_AGENT_ENGINE_ID set)")
+
     memory_service = InMemoryMemoryService()
-    runner = Runner(agent=compliance_agent, app_name=APP_NAME, session_service=session_service)
+    runner = Runner(agent=compliance_agent, app_name=app_name, session_service=session_service)
     _adk_available = True
 except (ImportError, Exception) as e:
     logger.warning(f"Compliance router degraded: {e}")
