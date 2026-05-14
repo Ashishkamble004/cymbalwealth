@@ -82,6 +82,8 @@ def _get_aws_credentials() -> dict:
             "DurationSeconds": "3600",
         }
         resp = http_requests.post(sts_url, data=params, timeout=10)
+        if not resp.ok:
+            logger.error(f"[A2A] STS response {resp.status_code}: {resp.text[:500]}")
         resp.raise_for_status()
 
         # Parse XML response
