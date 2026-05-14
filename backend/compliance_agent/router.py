@@ -20,14 +20,16 @@ APP_NAME = "cymbal-compliance"
 try:
     from google.adk.runners import Runner
     from google.adk.sessions import VertexAiSessionService
-    from google.adk.memory import VertexAiMemoryBankService
     from .agent import compliance_agent
     session_service = VertexAiSessionService(project="general-ak", location="us-central1")
-    memory_service = VertexAiMemoryBankService(project="general-ak", location="us-central1")
+    # Memory Bank requires an agent_engine_id once compliance agent is deployed to Agent Engine.
+    # Until then, use InMemoryMemoryService as a no-op placeholder.
+    from google.adk.memory import InMemoryMemoryService
+    memory_service = InMemoryMemoryService()
     runner = Runner(agent=compliance_agent, app_name=APP_NAME, session_service=session_service)
     _adk_available = True
-except ImportError as e:
-    logger.warning(f"google-adk not available, compliance router degraded: {e}")
+except (ImportError, Exception) as e:
+    logger.warning(f"Compliance router degraded: {e}")
     _adk_available = False
     runner = None
     session_service = None
@@ -82,14 +84,15 @@ async def query_compliance(request: ComplianceQuery):
 
     # Ingest the completed session into Vertex AI Memory Bank so that user
     # context (regulatory queries, prior decisions) persists across sessions.
+    # Memory Bank ingestion (no-op with InMemoryMemoryService until Agent Engine deployed)
     try:
-        session_obj = await session_service.get_session(
-            app_name=APP_NAME, user_id=user_id, session_id=session_id
-        )
-        await memory_service.add_session_to_memory(session=session_obj)
-        logger.info(f"[Compliance] Memory Bank ingestion complete for session {session_id}")
+        if hasattr(memory_service, 'add_session_to_memory'):
+            session_obj = await session_service.get_session(
+                app_name=APP_NAME, user_id=user_id, session_id=session_id
+            )
+            await memory_service.add_session_to_memory(session=session_obj)
     except Exception as e:
-        logger.warning(f"Memory Bank ingestion failed: {e}")
+        logger.warning(f"Memory Bank ingestion skipped: {e}")
 
     return ComplianceResponse(
         response=response_text or "No response generated.",
