@@ -38,7 +38,7 @@ from session_frames import (
     clear_session,
 )
 from customer_support.router import router as customer_support_router
-# from compliance_agent.router import router as compliance_router
+from compliance_agent.router import router as compliance_router
 
 # Configure logging
 logging.basicConfig(
