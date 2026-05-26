@@ -1,8 +1,8 @@
 """A2A Client — calls remote A2A agents from GCP via OIDC federation.
 
 Authentication flow (no static AWS credentials needed):
-  GCP Cloud Run service account
-    → GCP ID token (google-auth)
+  GCP metadata server (Cloud Run / GCE)
+    → Google-signed OIDC ID token
     → AWS STS AssumeRoleWithWebIdentity
     → Temporary AWS credentials
     → boto3 AgentCore invocation (SigV4)
@@ -11,6 +11,9 @@ Config via environment variables:
 - A2A_CREDIT_ARN: Credit Intelligence AgentCore Runtime ARN
 - A2A_REGULATORY_ARN: Regulatory Reporting AgentCore Runtime ARN
 - A2A_AWS_ROLE_ARN: IAM role to assume via OIDC (default: cymbal-wealth-gcp-agentcore)
+- A2A_OIDC_AUDIENCE: Audience claim for the OIDC token (default: "sts.amazonaws.com").
+    Note: AWS checks the `azp` claim (SA numeric ID) against the OIDC provider's
+    client IDs, NOT this audience value. This can be any string.
 - A2A_GATEWAY_ENABLED: "true" to route via GCP Agent Gateway (default: "false")
 - A2A_GATEWAY_URL: Agent Gateway base URL (when enabled)
 - AWS_REGION: AWS region for AgentCore (default: "us-east-1")
@@ -19,8 +22,8 @@ Config via environment variables:
 import json
 import logging
 import os
+import threading
 import uuid
-from functools import lru_cache
 from datetime import datetime, timezone, timedelta
 
 logger = logging.getLogger(__name__)
@@ -38,15 +41,46 @@ AWS_ROLE_ARN = os.environ.get(
     "arn:aws:iam::453809273083:role/cymbal-wealth-gcp-agentcore",
 )
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+OIDC_AUDIENCE = os.environ.get("A2A_OIDC_AUDIENCE", "sts.amazonaws.com")
 
 
 class A2AError(Exception):
     pass
 
 
-# Cache temporary credentials (they last 1 hour; refresh with 5 min buffer)
+_creds_lock = threading.Lock()
 _cached_creds: dict = {}
 _creds_expiry: datetime = datetime.min.replace(tzinfo=timezone.utc)
+_boto3_client = None
+_boto3_creds_id: str | None = None
+
+
+def _get_gcp_id_token(audience: str) -> str:
+    """Get a Google-signed OIDC ID token. Works on Cloud Run, GCE, and locally."""
+    import requests as http_requests
+
+    # Fastest path: GCE/Cloud Run metadata server (no IAM API, no extra perms)
+    try:
+        resp = http_requests.get(
+            "http://metadata.google.internal/computeMetadata/v1/instance/"
+            f"service-accounts/default/identity?audience={audience}&format=full",
+            headers={"Metadata-Flavor": "Google"},
+            timeout=3,
+        )
+        if resp.ok:
+            logger.info(f"[A2A] Got OIDC token via metadata server (aud={audience})")
+            return resp.text
+    except http_requests.ConnectionError:
+        pass
+
+    # Fallback: google-auth library (uses ADC — works with SA key files)
+    import google.oauth2.id_token
+    import google.auth.transport.requests
+    token = google.oauth2.id_token.fetch_id_token(
+        google.auth.transport.requests.Request(), audience
+    )
+    logger.info(f"[A2A] Got OIDC token via google-auth (aud={audience})")
+    return token
 
 
 def _get_aws_credentials() -> dict:
@@ -57,79 +91,93 @@ def _get_aws_credentials() -> dict:
     if _cached_creds and now < _creds_expiry - timedelta(minutes=5):
         return _cached_creds
 
-    try:
-        import google.auth
-        import google.auth.transport.requests
-        import google.oauth2.id_token
-        import boto3
-        import requests as http_requests
-        import xml.etree.ElementTree as ET
+    with _creds_lock:
+        if _cached_creds and now < _creds_expiry - timedelta(minutes=5):
+            return _cached_creds
 
-        # Get GCP ID token — audience must match the client ID registered in AWS OIDC provider
-        # We registered the AWS account ID (453809273083) as the initial client ID
-        audience = "453809273083"
-        request = google.auth.transport.requests.Request()
-        id_token = google.oauth2.id_token.fetch_id_token(request, audience)
+        try:
+            import requests as http_requests
+            import xml.etree.ElementTree as ET
 
-        # AssumeRoleWithWebIdentity via unsigned HTTP POST — no AWS credentials needed.
-        # Use global STS endpoint (not regional) for OIDC web identity exchanges.
-        sts_url = "https://sts.amazonaws.com/"
-        params = {
-            "Version": "2011-06-15",
-            "Action": "AssumeRoleWithWebIdentity",
-            "RoleArn": AWS_ROLE_ARN,
-            "RoleSessionName": f"cymbal-gcp-{uuid.uuid4().hex[:8]}",
-            "WebIdentityToken": id_token,
-            "DurationSeconds": "3600",
-        }
-        resp = http_requests.post(sts_url, data=params, timeout=10)
-        if not resp.ok:
-            logger.error(f"[A2A] STS response {resp.status_code}: {resp.text[:2000]}")
-        resp.raise_for_status()
+            id_token = _get_gcp_id_token(OIDC_AUDIENCE)
 
-        # Parse XML response
-        ns = {"sts": "https://sts.amazonaws.com/doc/2011-06-15/"}
-        root = ET.fromstring(resp.text)
-        result = root.find(".//sts:AssumeRoleWithWebIdentityResult", ns)
-        if result is None:
-            # Try without namespace
-            result = root.find(".//AssumeRoleWithWebIdentityResult")
-        cred_el = result.find("sts:Credentials", ns) if result is not None else None
-        if cred_el is None and result is not None:
-            cred_el = result.find("Credentials")
+            resp = http_requests.post("https://sts.amazonaws.com/", data={
+                "Version": "2011-06-15",
+                "Action": "AssumeRoleWithWebIdentity",
+                "RoleArn": AWS_ROLE_ARN,
+                "RoleSessionName": f"cymbal-gcp-{uuid.uuid4().hex[:8]}",
+                "WebIdentityToken": id_token,
+                "DurationSeconds": "3600",
+            }, timeout=15)
+            if not resp.ok:
+                error_text = resp.text.replace("\n", " ").replace("\r", "")
+                logger.error(f"[A2A] STS {resp.status_code}: {error_text}")
+            resp.raise_for_status()
 
-        if cred_el is None:
-            raise ValueError(f"No Credentials in STS response: {resp.text[:300]}")
+            ns = {"sts": "https://sts.amazonaws.com/doc/2011-06-15/"}
+            root = ET.fromstring(resp.text)
 
-        def _text(el, tag):
-            node = el.find(f"sts:{tag}", ns) or el.find(tag)
-            return node.text if node is not None else None
+            def _find(el, tag):
+                node = el.find(f"sts:{tag}", ns)
+                if node is None:
+                    node = el.find(tag)
+                return node
 
-        _cached_creds = {
-            "aws_access_key_id": _text(cred_el, "AccessKeyId"),
-            "aws_secret_access_key": _text(cred_el, "SecretAccessKey"),
-            "aws_session_token": _text(cred_el, "SessionToken"),
-        }
-        expiry_str = _text(cred_el, "Expiration")
-        _creds_expiry = datetime.fromisoformat(expiry_str.replace("Z", "+00:00")) if expiry_str else datetime.now(timezone.utc) + timedelta(hours=1)
-        logger.info("[A2A] OIDC credentials refreshed via unsigned STS AssumeRoleWithWebIdentity")
-        return _cached_creds
+            result = root.find(".//sts:AssumeRoleWithWebIdentityResult", ns)
+            if result is None:
+                result = root.find(".//AssumeRoleWithWebIdentityResult")
+            cred_el = _find(result, "Credentials") if result is not None else None
+            if cred_el is None:
+                raise ValueError(f"No Credentials in STS response: {resp.text[:300]}")
 
-    except Exception as exc:
-        raise A2AError(f"OIDC credential exchange failed: {exc}") from exc
+            def _text(tag):
+                node = _find(cred_el, tag)
+                return node.text if node is not None else None
+
+            _cached_creds = {
+                "aws_access_key_id": _text("AccessKeyId"),
+                "aws_secret_access_key": _text("SecretAccessKey"),
+                "aws_session_token": _text("SessionToken"),
+            }
+            expiry_str = _text("Expiration")
+            _creds_expiry = (
+                datetime.fromisoformat(expiry_str.replace("Z", "+00:00"))
+                if expiry_str
+                else now + timedelta(hours=1)
+            )
+            logger.info("[A2A] OIDC credentials refreshed")
+            return _cached_creds
+
+        except Exception as exc:
+            raise A2AError(f"OIDC credential exchange failed: {exc}") from exc
 
 
 def _get_boto3_client():
     """Return a boto3 bedrock-agentcore client with OIDC-derived credentials."""
+    global _boto3_client, _boto3_creds_id
     import boto3
 
-    # If running locally with explicit AWS env vars, use them directly
     if os.environ.get("AWS_ACCESS_KEY_ID") and os.environ.get("AWS_SECRET_ACCESS_KEY"):
         return boto3.client("bedrock-agentcore", region_name=AWS_REGION)
 
-    # On Cloud Run: use OIDC federation
     creds = _get_aws_credentials()
-    return boto3.client("bedrock-agentcore", region_name=AWS_REGION, **creds)
+    creds_id = creds["aws_access_key_id"]
+    if _boto3_client is not None and _boto3_creds_id == creds_id:
+        return _boto3_client
+    _boto3_client = boto3.client("bedrock-agentcore", region_name=AWS_REGION, **creds)
+    _boto3_creds_id = creds_id
+    return _boto3_client
+
+
+def _extract_a2a_text(body: dict) -> str:
+    """Extract text from an A2A JSON-RPC response (artifacts or history format)."""
+    result = body.get("result", {})
+    messages = result.get("artifacts") or result.get("history", [])
+    for msg in reversed(messages):
+        for part in msg.get("parts", []):
+            if part.get("kind") == "text" and part.get("text"):
+                return part["text"]
+    raise A2AError(f"No text in A2A response: {json.dumps(body)[:300]}")
 
 
 def get_config() -> dict:
@@ -179,10 +227,7 @@ def _call_agentcore(runtime_arn: str, user_message: str) -> str:
         err = body["error"]
         raise A2AError(f"A2A error {err.get('code')}: {err.get('message')}")
 
-    try:
-        return body["result"]["artifacts"][0]["parts"][0]["text"]
-    except (KeyError, IndexError) as exc:
-        raise A2AError(f"Unexpected response structure: {json.dumps(body)[:300]}") from exc
+    return _extract_a2a_text(body)
 
 
 def _call_via_gateway(gateway_url: str, path: str, user_message: str) -> str:
@@ -212,10 +257,7 @@ def _call_via_gateway(gateway_url: str, path: str, user_message: str) -> str:
     if "error" in body:
         raise A2AError(f"A2A error: {body['error']}")
 
-    try:
-        return body["result"]["artifacts"][0]["parts"][0]["text"]
-    except (KeyError, IndexError) as exc:
-        raise A2AError(f"Unexpected response: {json.dumps(body)[:300]}") from exc
+    return _extract_a2a_text(body)
 
 
 def call_credit_intelligence(query: str) -> str:

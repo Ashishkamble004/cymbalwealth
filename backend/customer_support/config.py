@@ -13,7 +13,7 @@ class Settings:
     stt_model: str = os.getenv("STT_MODEL", "chirp_3")
     stt_location: str = os.getenv("STT_LOCATION", "us")
     stt_language: str = os.getenv("STT_LANGUAGE", "auto")
-    llm_model: str = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    llm_model: str = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
 
 
 settings = Settings()

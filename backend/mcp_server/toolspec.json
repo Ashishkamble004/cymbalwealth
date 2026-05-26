@@ -1,0 +1,195 @@
+{
+  "tools": [
+    {
+      "name": "get_stock_quote",
+      "description": "Get real-time quote for an NSE/BSE listed stock including price, change, valuation metrics (P/E, EPS, market cap), 52-week range, and volume data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "NSE stock symbol e.g. RELIANCE, TCS, INFY"
+          },
+          "exchange": {
+            "type": "string",
+            "enum": ["NSE", "BSE"],
+            "default": "NSE",
+            "description": "Stock exchange — NSE (National Stock Exchange) or BSE (Bombay Stock Exchange)"
+          }
+        },
+        "required": ["symbol"]
+      },
+      "annotations": {
+        "title": "Stock Quote",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_index_data",
+      "description": "Get current value, change percentage, and intraday range for major Indian market indices including NIFTY 50, SENSEX, Bank Nifty, Nifty IT, and Nifty Midcap.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "string",
+            "enum": ["NIFTY50", "SENSEX", "NIFTYBANK", "NIFTYIT", "NIFTYMIDCAP"],
+            "description": "Indian market index name"
+          }
+        },
+        "required": ["index"]
+      },
+      "annotations": {
+        "title": "Index Data",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_historical_data",
+      "description": "Get historical OHLCV (Open, High, Low, Close, Volume) data for a stock over a specified period with sparkline visualization, period return, and recent session details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "NSE/BSE stock symbol"
+          },
+          "period": {
+            "type": "string",
+            "enum": ["1w", "1mo", "3mo", "6mo", "1y", "2y", "5y"],
+            "default": "1mo",
+            "description": "Time period for historical data"
+          },
+          "exchange": {
+            "type": "string",
+            "enum": ["NSE", "BSE"],
+            "default": "NSE"
+          }
+        },
+        "required": ["symbol"]
+      },
+      "annotations": {
+        "title": "Historical Data",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "compare_stocks",
+      "description": "Compare multiple NSE/BSE stocks side-by-side with price, change percentage, market cap, P/E ratio, 52-week return, and dividend yield.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbols": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 2,
+            "maxItems": 5,
+            "description": "List of 2-5 NSE stock symbols to compare"
+          }
+        },
+        "required": ["symbols"]
+      },
+      "annotations": {
+        "title": "Stock Comparison",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_top_movers",
+      "description": "Get top gainers and losers from the Nifty 50 index for today's trading session.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["gainers", "losers", "both"],
+            "default": "both",
+            "description": "Filter for gainers, losers, or both"
+          },
+          "top_n": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Number of stocks to return per category"
+          }
+        }
+      },
+      "annotations": {
+        "title": "Top Movers",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_sector_performance",
+      "description": "Get today's performance of Indian market sectors including IT, Banking, Pharma, Auto, FMCG, Energy, and Metals.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "title": "Sector Performance",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_company_info",
+      "description": "Get detailed company information for an NSE/BSE listed stock including sector, industry, employee count, headquarters, website, and business summary.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "NSE stock symbol"
+          }
+        },
+        "required": ["symbol"]
+      },
+      "annotations": {
+        "title": "Company Info",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_financials",
+      "description": "Get key financial metrics for a stock including revenue, net income, EPS, profit margins, ROE, ROA, debt/equity ratio, and dividend information.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "NSE stock symbol"
+          }
+        },
+        "required": ["symbol"]
+      },
+      "annotations": {
+        "title": "Financial Metrics",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

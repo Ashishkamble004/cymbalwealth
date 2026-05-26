@@ -1,10 +1,10 @@
-"""Cymbal Wealth — Video KYC Agent package.
+"""Cymbal Wealth — Video KYC Agent package (genai-sdk).
 
-Uses AgentTool pattern for calling sub-agents:
-- Root agent: Live API (gemini-live-2.5-flash-native-audio) for voice/video KYC
-- Sub-agents: Text model (gemini-2.5-flash) for document verification
+Exports the system instruction, tool declarations, and tool implementations
+for the Gemini Live session managed by gemini_client.py + tool_executor.py.
 """
 
-from .agent import agent
+from .agent import SYSTEM_INSTRUCTION, get_tool_declarations
+from .sub_agents.verification_agent import TOOLS_MAP
 
-__all__ = ["agent"]
+__all__ = ["SYSTEM_INSTRUCTION", "get_tool_declarations", "TOOLS_MAP"]

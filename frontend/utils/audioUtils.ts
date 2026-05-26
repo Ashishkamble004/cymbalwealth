@@ -72,6 +72,8 @@ export function resampleAudio(
 /**
  * AudioWorklet processor code for capturing microphone PCM audio.
  * Returns the code as a string to be loaded via Blob URL.
+ *
+ * @deprecated Use createAudioProcessor() from enhancedAudioProcessor.ts instead.
  */
 export function getPCMProcessorCode(): string {
   return `
@@ -100,4 +102,27 @@ class PCMProcessor extends AudioWorkletProcessor {
 
 registerProcessor('pcm-processor', PCMProcessor);
 `;
+}
+
+/**
+ * Convert a Float32Array of PCM samples to an Int16Array.
+ */
+export function float32ToInt16(float32: Float32Array): Int16Array {
+  const int16 = new Int16Array(float32.length);
+  for (let i = 0; i < float32.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32[i]));
+    int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+  }
+  return int16;
+}
+
+/**
+ * Convert an Int16Array of PCM samples to a Float32Array.
+ */
+export function int16ToFloat32(int16: Int16Array): Float32Array {
+  const float32 = new Float32Array(int16.length);
+  for (let i = 0; i < int16.length; i++) {
+    float32[i] = int16[i] / (int16[i] < 0 ? 0x8000 : 0x7FFF);
+  }
+  return float32;
 }

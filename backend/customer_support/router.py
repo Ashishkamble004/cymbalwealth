@@ -14,6 +14,6 @@ async def health():
 async def websocket_endpoint(
     websocket: WebSocket,
     stt_language: str = "auto",
-    llm_model: str = "gemini-2.5-flash",
+    llm_model: str = "gemini-3.1-flash-lite",
 ):
     await run_agent(websocket, stt_language=stt_language, llm_model=llm_model)

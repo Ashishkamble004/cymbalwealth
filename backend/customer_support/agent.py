@@ -183,7 +183,7 @@ async def process_with_rag_llm(
 async def run_agent(
     websocket: WebSocket,
     stt_language: str = "auto",
-    llm_model: str = "gemini-2.5-flash",
+    llm_model: str = "gemini-3.1-flash-lite",
 ):
     """Main WebSocket handler — wires STT → LLM → compliance pipeline."""
     await websocket.accept()

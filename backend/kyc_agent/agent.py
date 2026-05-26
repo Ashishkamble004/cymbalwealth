@@ -269,7 +269,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="verify_pan",
@@ -288,7 +287,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "pan_number"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="verify_aadhaar_last4",
@@ -307,7 +305,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "aadhaar_last4"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="verify_dob",
@@ -329,7 +326,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "date_of_birth"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="capture_pan_card",
@@ -352,7 +348,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "session_id"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="capture_profile_photo",
@@ -375,7 +370,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "session_id"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="capture_signature",
@@ -398,7 +392,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         },
                         required=["reference_number", "session_id"],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="complete_kyc",
@@ -439,7 +432,6 @@ def get_tool_declarations() -> list[types.Tool]:
                             "signature_verified",
                         ],
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
                 types.FunctionDeclaration(
                     name="get_current_date",
@@ -448,7 +440,6 @@ def get_tool_declarations() -> list[types.Tool]:
                         type=types.Type.OBJECT,
                         properties={},
                     ),
-                    behavior=types.Behavior.NON_BLOCKING,
                 ),
             ]
         )

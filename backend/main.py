@@ -103,6 +103,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
 
     transcript: list[dict] = []
     reference_number = None
+    response_id = 0
 
     # Buffers for recording
     input_audio_chunks: list[bytes] = []   # User audio (16kHz PCM)
@@ -196,7 +197,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
 
             async def receive_from_gemini():
                 """Route Gemini Live session events back to the client WebSocket."""
-                nonlocal session_handle
+                nonlocal session_handle, response_id
                 try:
                     while True:
                         async for message in session.receive():
@@ -212,15 +213,18 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session_id: str
                                     "type": "audio",
                                     "data": audio_base64,
                                     "mime_type": "audio/pcm;rate=24000",
+                                    "response_id": response_id,
                                 }))
 
                             if message.server_content:
                                 sc = message.server_content
 
                                 if sc.interrupted:
+                                    response_id += 1
                                     await safe_send(json.dumps({
                                         "type": "interrupted",
-                                        "data": "Response interrupted by user input"
+                                        "data": "Response interrupted by user input",
+                                        "response_id": response_id,
                                     }))
 
                                 if sc.turn_complete:

@@ -1,7 +1,7 @@
-"""Sub-agents for Cymbal Wealth Video KYC System."""
+"""Sub-agents / tools for Cymbal Wealth Video KYC System."""
 
-from .verification_agent import document_verification_agent
+from .verification_agent import TOOLS_MAP
 
 __all__ = [
-    "document_verification_agent",
+    "TOOLS_MAP",
 ]

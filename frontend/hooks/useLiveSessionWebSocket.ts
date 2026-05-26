@@ -64,6 +64,7 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
   // Queue for audio playback to prevent overlap
   const audioQueueRef = useRef<AudioBuffer[]>([]);
   const isPlayingRef = useRef(false);
+  const currentResponseIdRef = useRef<number>(0);
 
   // Track in-progress transcription message IDs for live updates
   const inputTranscriptionIdRef = useRef<string | null>(null);
@@ -195,6 +196,10 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
 
         switch (data.type) {
           case "audio": {
+            if (data.response_id !== undefined && data.response_id < currentResponseIdRef.current) {
+              console.log(`[Audio] Ignoring stale audio chunk (id: ${data.response_id}, current: ${currentResponseIdRef.current})`);
+              break;
+            }
             if (data.data && playbackContextRef.current) {
               const pcm = decodeBase64ToAudio(data.data);
               const audioBuffer = createAudioBuffer(
@@ -241,6 +246,9 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
             break;
           }
           case "interrupted": {
+            if (data.response_id !== undefined) {
+              currentResponseIdRef.current = data.response_id;
+            }
             // Smooth barge-in cutoff: ramp gain to 0 over 100ms then stop, avoid audio pop
             const ctx = playbackContextRef.current;
             if (ctx && currentSourceRef.current) {
@@ -360,6 +368,7 @@ export function useLiveSessionWebSocket(): UseLiveSessionReturn {
       inputTranscriptionIdRef.current = null;
       outputTranscriptionIdRef.current = null;
       outputTextBufferRef.current = "";
+      currentResponseIdRef.current = 0;
 
       const userId = `user-${crypto.randomUUID().slice(0, 8)}`;
       const sessionId = `session-${crypto.randomUUID().slice(0, 8)}`;

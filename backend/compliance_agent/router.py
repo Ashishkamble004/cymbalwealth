@@ -39,9 +39,12 @@ try:
         logger.info("[Compliance] Using InMemorySessionService (no COMPLIANCE_AGENT_ENGINE_ID set)")
 
     memory_service = InMemoryMemoryService()
-    runner = Runner(agent=compliance_agent, app_name=app_name, session_service=session_service)
+    runner = Runner(
+        agent=compliance_agent, app_name=app_name,
+        session_service=session_service, auto_create_session=True,
+    )
     _adk_available = True
-except (ImportError, Exception) as e:
+except Exception as e:
     logger.warning(f"Compliance router degraded: {e}")
     _adk_available = False
     runner = None
@@ -75,12 +78,6 @@ async def query_compliance(request: ComplianceQuery):
     user_id = "demo-user"
     session_id = request.session_id or str(uuid.uuid4())
 
-    session = await session_service.create_session(
-        app_name=APP_NAME,
-        user_id=user_id,
-        session_id=session_id,
-    )
-
     response_text = ""
     async for event in runner.run_async(
         user_id=user_id,
@@ -111,7 +108,7 @@ async def query_compliance(request: ComplianceQuery):
         response=response_text or "No response generated.",
         session_id=session_id,
         timestamp=datetime.now(timezone.utc).isoformat(),
-        a2a_routed=bool(config.get("regulatory_endpoint")),
+        a2a_routed=bool(config.get("regulatory_arn")),
         gateway_enabled=config.get("gateway_enabled", False),
     )
 
@@ -124,6 +121,6 @@ async def compliance_health():
     return {
         "status": "ok",
         "service": "compliance-agent",
-        "a2a_endpoint_configured": bool(config.get("regulatory_endpoint")),
+        "a2a_endpoint_configured": bool(config.get("regulatory_arn")),
         "gateway_enabled": config.get("gateway_enabled", False),
     }

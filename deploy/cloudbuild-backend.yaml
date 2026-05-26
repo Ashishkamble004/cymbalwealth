@@ -45,7 +45,7 @@ steps:
         "--min-instances",
         "1",
         "--set-env-vars",
-        "GCP_PROJECT=${PROJECT_ID},GCP_REGION=${_REGION},GCS_BUCKET=${_GCS_BUCKET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=TRUE",
+        "GCP_PROJECT=${PROJECT_ID},GCP_REGION=${_REGION},GCS_BUCKET=${_GCS_BUCKET},AUTH_MODE=AI_STUDIO,MODEL_ID=gemini-3.1-flash-live-preview,VOICE_NAME=Charon,DISABLE_VAD=false,GEMINI_API_KEY_SECRET=projects/${PROJECT_ID}/secrets/gemini-api-key/versions/latest",
       ]
     waitFor: ["push-backend"]
 

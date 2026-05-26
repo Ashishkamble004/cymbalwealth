@@ -1,14 +1,11 @@
-"""Document Verification Sub-Agent for Cymbal Wealth Video KYC.
+"""Document Verification Tools for Cymbal Wealth Video KYC.
 
-Uses gemini-2.5-flash for text-based document verification tasks.
-Called by the root KYC agent via AgentTool.
+Provides the 9 tool functions used by the Gemini Live session via
+ToolExecutor. Previously wrapped in an ADK Agent; now called directly.
 """
 
-import os
 import logging
 from datetime import date
-from google.adk.agents import Agent
-from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +260,7 @@ def capture_signature(reference_number: str, session_id: str) -> dict:
     return {"captured": False, "message": "Failed to store signature image."}
 
 
-def complete_kyc(reference_number: str, pan_verified: bool, aadhaar_verified: bool, face_verified: bool) -> dict:
+def complete_kyc(reference_number: str, pan_verified: bool, aadhaar_verified: bool, face_verified: bool, signature_verified: bool) -> dict:
     """Complete the Video KYC process and generate a KYC completion reference.
 
     Args:
@@ -271,6 +268,7 @@ def complete_kyc(reference_number: str, pan_verified: bool, aadhaar_verified: bo
         pan_verified: Whether PAN was verified
         aadhaar_verified: Whether Aadhaar was verified
         face_verified: Whether face/liveness was verified
+        signature_verified: Whether signature was verified
 
     Returns:
         KYC completion status with reference ID.
@@ -280,7 +278,7 @@ def complete_kyc(reference_number: str, pan_verified: bool, aadhaar_verified: bo
     if not customer:
         return {"completed": False, "message": "Customer not found."}
 
-    all_verified = pan_verified and aadhaar_verified and face_verified
+    all_verified = pan_verified and aadhaar_verified and face_verified and signature_verified
     if all_verified:
         import random
         import string
@@ -300,6 +298,8 @@ def complete_kyc(reference_number: str, pan_verified: bool, aadhaar_verified: bo
         missing.append("Aadhaar verification")
     if not face_verified:
         missing.append("Face/liveness verification")
+    if not signature_verified:
+        missing.append("Signature verification")
     return {
         "completed": False,
         "status": "INCOMPLETE",
@@ -321,52 +321,15 @@ def get_current_date() -> dict:
     }
 
 
-# Sub-agent definition
-document_verification_agent = Agent(
-    name="document_verification_agent",
-    model="gemini-2.5-flash",
-    generate_content_config=types.GenerateContentConfig(
-        temperature=0,
-        thinking_config=types.ThinkingConfig(thinking_budget=0),
-    ),
-    instruction="""You are a document verification specialist for Cymbal Wealth.
-Your job is to verify customer identity documents during Video KYC by
-cross-checking data provided by the root agent against our internal records.
-
-IMPORTANT: You do NOT see the video feed. The root agent (Sanjay) reads the
-documents using vision and passes the extracted data to you. You then verify
-that data against the customer database using your tools.
-
-Verification workflow:
-1. **UNMISTAKABLY** invoke lookup_customer(reference_number) to find the customer record
-2. When the root agent provides a PAN number (read from the card via vision),
-   **UNMISTAKABLY** invoke verify_pan(reference_number, pan_number) to check against DB
-3. When the root agent provides Aadhaar last 4 digits (told by customer),
-   **UNMISTAKABLY** invoke verify_aadhaar_last4(reference_number, aadhaar_last4)
-4. When the root agent provides DOB (told by customer),
-   **UNMISTAKABLY** invoke verify_dob(reference_number, date_of_birth)
-5. When asked to capture PAN card, **UNMISTAKABLY** invoke capture_pan_card
-6. When asked to capture profile photo, **UNMISTAKABLY** invoke capture_profile_photo
-7. When asked to capture signature, **UNMISTAKABLY** invoke capture_signature
-8. When ALL verifications pass (PAN, Aadhaar, DOB, face, signature),
-   **UNMISTAKABLY** invoke complete_kyc
-
-Rules:
-- Return EXACT verification results — pass or fail with specific details
-- If a PAN/Aadhaar/DOB doesn't match, say EXACTLY what doesn't match
-- Never reveal the expected values from the database to the customer
-- Never share full account numbers or sensitive details
-- Do NOT complete KYC unless ALL checks have passed
-""",
-    tools=[
-        lookup_customer,
-        verify_pan,
-        verify_aadhaar_last4,
-        verify_dob,
-        capture_pan_card,
-        capture_profile_photo,
-        capture_signature,
-        complete_kyc,
-        get_current_date,
-    ],
-)
+# Map of function name → implementation, used by ToolExecutor
+TOOLS_MAP = {
+    "lookup_customer": lookup_customer,
+    "verify_pan": verify_pan,
+    "verify_aadhaar_last4": verify_aadhaar_last4,
+    "verify_dob": verify_dob,
+    "capture_pan_card": capture_pan_card,
+    "capture_profile_photo": capture_profile_photo,
+    "capture_signature": capture_signature,
+    "complete_kyc": complete_kyc,
+    "get_current_date": get_current_date,
+}

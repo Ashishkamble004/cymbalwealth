@@ -1,0 +1,9 @@
+name: agent-gateway
+protocols: [MCP]
+googleManaged:
+  governedAccessPath: AGENT_TO_ANYWHERE
+registries:
+  - "//agentregistry.googleapis.com/projects/769002985772/locations/us-central1"
+networkConfig:
+  egress:
+    networkAttachment: projects/general-ak/regions/us-central1/networkAttachments/agent-gateway-na

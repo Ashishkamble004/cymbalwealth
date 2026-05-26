@@ -30,6 +30,7 @@ export interface ServerMessage {
   role?: string;
   text?: string;
   finished?: boolean;
+  response_id?: number;
 }
 
 /** WebSocket message to server. */

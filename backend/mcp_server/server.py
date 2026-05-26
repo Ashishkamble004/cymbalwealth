@@ -7,6 +7,8 @@ No API key required for demo use.
 
 import json
 import asyncio
+import logging
+import time
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -15,6 +17,14 @@ import pandas as pd
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+
+logger = logging.getLogger("nse-mcp-tools")
+
+try:
+    from opentelemetry import trace
+    _tracer = trace.get_tracer("nse-mcp-tools")
+except Exception:
+    _tracer = None
 
 app = Server("nse-bse-market-server")
 
@@ -419,27 +429,52 @@ def handle_get_financials(symbol: str) -> str:
 # ── Tool dispatcher (used by both MCP and REST /chat) ─────────────────────────
 
 def call_tool_handler(name: str, arguments: dict) -> str:
+    start = time.monotonic()
+    span_ctx = None
+    if _tracer:
+        span_ctx = _tracer.start_span(f"mcp_tool.{name}", attributes={
+            "mcp.tool.name": name,
+            "mcp.tool.arguments": json.dumps(arguments)[:500],
+        })
+
     try:
         if name == "get_stock_quote":
-            return handle_get_stock_quote(arguments["symbol"], arguments.get("exchange", "NSE"))
+            result = handle_get_stock_quote(arguments["symbol"], arguments.get("exchange", "NSE"))
         elif name == "get_index_data":
-            return handle_get_index_data(arguments["index"])
+            result = handle_get_index_data(arguments["index"])
         elif name == "get_historical_data":
-            return handle_get_historical_data(
+            result = handle_get_historical_data(
                 arguments["symbol"], arguments.get("period", "1mo"), arguments.get("exchange", "NSE"))
         elif name == "compare_stocks":
-            return handle_compare_stocks(arguments["symbols"])
+            result = handle_compare_stocks(arguments["symbols"])
         elif name == "get_top_movers":
-            return handle_get_top_movers(arguments.get("type", "both"), arguments.get("top_n", 5))
+            result = handle_get_top_movers(arguments.get("type", "both"), arguments.get("top_n", 5))
         elif name == "get_sector_performance":
-            return handle_get_sector_performance()
+            result = handle_get_sector_performance()
         elif name == "get_company_info":
-            return handle_get_company_info(arguments["symbol"])
+            result = handle_get_company_info(arguments["symbol"])
         elif name == "get_financials":
-            return handle_get_financials(arguments["symbol"])
+            result = handle_get_financials(arguments["symbol"])
         else:
-            return f"❌ Unknown tool: {name}"
+            result = f"❌ Unknown tool: {name}"
+
+        latency_ms = int((time.monotonic() - start) * 1000)
+        logger.info("Tool executed", extra={
+            "tool_name": name,
+            "latency_ms": latency_ms,
+            "response_length": len(result),
+        })
+        if span_ctx:
+            span_ctx.set_attribute("mcp.tool.latency_ms", latency_ms)
+            span_ctx.set_attribute("mcp.tool.response_length", len(result))
+            span_ctx.set_attribute("mcp.tool.success", True)
+            span_ctx.end()
+        return result
     except Exception as e:
+        if span_ctx:
+            span_ctx.set_attribute("mcp.tool.success", False)
+            span_ctx.set_attribute("mcp.tool.error", str(e))
+            span_ctx.end()
         return f"❌ Error executing {name}: {str(e)}"
 
 
